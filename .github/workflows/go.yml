@@ -1,15 +1,23 @@
 name: go test
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+on: [push, pull_request]
 
 jobs:
-  
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.14'
+      - name: Run Coverage
+        run: go test -v -covermode=count -coverprofile=profile.cov ./...
+      - name: Send coverage report to coveralls
+        uses: shogo82148/actions-goveralls@v1
+        with:
+          path-to-profile: profile.cov
+
   build:
-    name: Build
     runs-on: ubuntu-latest
     steps:
 
@@ -33,8 +41,5 @@ jobs:
     - name: Build
       run: go build -v .
 
-    - name: Test
-      run: go test -v .
-    
     - name: RecursiveTest
       run: go test ./...
