@@ -10,6 +10,7 @@ package rdfloader
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"unicode"
@@ -413,6 +414,7 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 
 func (xmlReader *XMLReader) Read() (rootBlock Block, err error) {
 	rootBlock, err = xmlReader.readBlock()
+	fmt.Println()
 	return rootBlock, err
 }
 
@@ -424,7 +426,6 @@ func XMLReaderFromFileObject(fileObject *bufio.Reader) XMLReader {
 
 func XMLReaderFromFilePath(filePath string) (xmlReader XMLReader, err error) {
 	fileReader, err := os.Open(filePath)
-	defer fileReader.Close()
 	if err != nil {
 		return xmlReader, err
 	}
