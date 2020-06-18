@@ -25,9 +25,9 @@ type XMLReader struct {
 
 
 type Attribute struct {
-	name string
-	schemaName string
-	value string
+	Name string
+	SchemaName string
+	Value string
 }
 
 
@@ -38,9 +38,9 @@ type pair struct {
 
 
 type Tag struct {
-	schemaName string
-	name string
-	attrs []Attribute
+	SchemaName string
+	Name string
+	Attrs []Attribute
 }
 
 
@@ -51,9 +51,9 @@ type Block struct {
 	// 		2. <tag attr="attr" />
 	//      3. <tag> value </tag>
 	//      4. <parent> <child> value </child> </parent>
-	openingTag Tag
-	value string
-	children []*Block
+	OpeningTag Tag
+	Value string
+	Children []*Block
 }
 
 
@@ -154,10 +154,10 @@ func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 	pair, colonExists, err := xmlReader.readColonPair(WHITESPACE | 1 << '=')
 	if err != nil { return attr, err }
 	if colonExists {
-		attr.schemaName = pair.first.(string)
-		attr.name = pair.second.(string)
+		attr.SchemaName = pair.first.(string)
+		attr.Name = pair.second.(string)
 	} else {
-		attr.name = pair.first.(string)
+		attr.Name = pair.first.(string)
 	}
 	_, err = xmlReader.ignoreWhiteSpace()
 	if err != nil { return attr, err }
@@ -183,7 +183,7 @@ func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 		return attr, errors.New("unexpected blank char. expected a closing quote")
 	}
 
-	attr.value = string(word)
+	attr.Value = string(word)
 	return attr, err
 }
 
@@ -238,10 +238,10 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 	if err != nil { return }
 
 	if colonExist {
-		tag.schemaName = pair.first.(string)
-		tag.name = pair.second.(string)
+		tag.SchemaName = pair.first.(string)
+		tag.Name = pair.second.(string)
 	} else {
-		tag.name = pair.first.(string)
+		tag.Name = pair.first.(string)
 	}
 
 	delim, _ := xmlReader.readARune() // read the delimiter.
@@ -278,7 +278,7 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 
 	if nextRune == '>' {
 		// opening tag didn't had any attributes.
-		tag.name = string(word)
+		tag.Name = string(word)
 		return
 	}
 
@@ -287,7 +287,7 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 		attr, err := xmlReader.readAttribute()
 		if err != nil { return tag, blockComplete, err }
 
-		tag.attrs = append(tag.attrs, attr)
+		tag.Attrs = append(tag.Attrs, attr)
 		_, err = xmlReader.ignoreWhiteSpace()
 		if err != nil { return tag, blockComplete, err }
 
@@ -330,10 +330,10 @@ func (xmlReader *XMLReader) readClosingTag() (closingTag Tag, err error) {
 	}
 
 	if colonExists {
-		closingTag.schemaName = pair.first.(string)
-		closingTag.name = pair.second.(string)
+		closingTag.SchemaName = pair.first.(string)
+		closingTag.Name = pair.second.(string)
 	} else {
-		closingTag.name = pair.first.(string)
+		closingTag.Name = pair.first.(string)
 	}
 
 	xmlReader.ignoreWhiteSpace()
@@ -355,7 +355,7 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 	if err != nil {
 		return block, err
 	}
-	block.openingTag = openingTag
+	block.OpeningTag = openingTag
 
 	if blockComplete {
 		// tag was of this type: <schemaName:tagName />
@@ -374,7 +374,7 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 		if err != nil {
 			return block, err
 		}
-		block.value = string(word)
+		block.Value = string(word)
 	} else {
 		// expecting a new tag or the closing tag of the currently read tag.
 		nextTwoBytes, err := xmlReader.peekNBytes(2)
@@ -388,7 +388,7 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 				return block, err
 			}
 
-			block.children = append(block.children, &childBlock)
+			block.Children = append(block.Children, &childBlock)
 
 			xmlReader.ignoreWhiteSpace()
 			nextTwoBytes, err = xmlReader.peekNBytes(2)
@@ -403,7 +403,7 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 		return block, err
 	}
 
-	if closingTag.name != closingTag.name || closingTag.schemaName != closingTag.schemaName {
+	if closingTag.Name != closingTag.Name || closingTag.SchemaName != closingTag.SchemaName {
 		// opening and closing tags are not equal.
 		return block, errors.New("opening and closing tags doesn't match")
 	}
