@@ -17,11 +17,11 @@ import (
 	"reflect"
 	"strings"
 
-	gordf "github.com/RishabhBhatnagar/gordf"
+	reader "github.com/RishabhBhatnagar/gordf/rdfloader/reader"
 )
 
 
-func printBlockHeader(block gordf.Block) {
+func printBlockHeader(block reader.Block) {
 	// Prints name and attributes of the block.
 	fmt.Printf("Name: <%v:%v>\n", block.OpeningTag.SchemaName, block.OpeningTag.Name)
 
@@ -66,7 +66,7 @@ func main() {
 		fmt.Printf("Error opening %v: %v\n", filePath, err)
 		os.Exit(1)
 	}
-	xmlReader1 := gordf.XMLReaderFromFileObject(bufio.NewReader(fileHandler))
+	xmlReader1 := reader.XMLReaderFromFileObject(bufio.NewReader(fileHandler))
 	root1, err := xmlReader1.Read()
 	if err != nil {
 		fmt.Printf("Error while parsing %v: %v\n", filePath, err)
@@ -76,7 +76,7 @@ func main() {
 
 
 	// Method 2: using file paths
-	xmlReader2, err := gordf.XMLReaderFromFilePath(filePath)
+	xmlReader2, err := reader.XMLReaderFromFilePath(filePath)
 	if err != nil {
 		fmt.Printf("Error opening %v: %v", filePath, err)
 		os.Exit(1)
