@@ -17,7 +17,7 @@ import (
 	"reflect"
 	"strings"
 
-	reader "github.com/RishabhBhatnagar/gordf/rdfloader/reader"
+	reader "github.com/RishabhBhatnagar/gordf/rdfloader/xmlreader"
 )
 
 

@@ -178,9 +178,10 @@ func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 	// read till next quote.
 	word, err := xmlReader.readTill(WHITESPACE | 1 << byte(firstQuote))
 	if err != nil { return attr, err }
-
 	secondQuote, _ := xmlReader.readARune()
 	if firstQuote != secondQuote {
+		chars, _ := xmlReader.peekNBytes(200)
+		fmt.Println(string(firstQuote), string(secondQuote), string(chars))
 		return attr, errors.New("unexpected blank char. expected a closing quote")
 	}
 
