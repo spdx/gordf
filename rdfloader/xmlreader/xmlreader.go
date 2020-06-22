@@ -1,6 +1,5 @@
 package rdfloader
 
-
 /**
  * This module provides the functions needed to read a file tag by tag.
  * Since the documents are written in rdf/xml,
@@ -13,121 +12,14 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"unicode"
 )
-
-
-const WHITESPACE = 1<<'\t' | 1<<'\n' | 1<<'\r' | 1<<' '
-
-
-type XMLReader struct {
-	fileReader *bufio.Reader
-}
-
-
-type Attribute struct {
-	Name string
-	SchemaName string
-	Value string
-}
-
-
-type pair struct {
-	first interface{}
-	second interface{}
-}
-
-
-type Tag struct {
-	SchemaName string
-	Name string
-	Attrs []Attribute
-}
-
-
-type Block struct {
-	// A block is a valid sub-xml.
-	// for example:
-	// 		1. <tag />
-	// 		2. <tag attr="attr" />
-	//      3. <tag> value </tag>
-	//      4. <parent> <child> value </child> </parent>
-	OpeningTag Tag
-	Value string
-	Children []*Block
-}
-
-
-func (xmlReader *XMLReader) peekARune() (r rune, err error) {
-	// returns next character in the file without affecting the file pointer
-	singleByte, err := xmlReader.fileReader.Peek(1)
-	return rune(singleByte[0]), err
-}
-
-
-func (xmlReader *XMLReader) readARune() (rune, error) {
-	singleByteArray := make([]byte, 1)
-	_, err := xmlReader.fileReader.Read(singleByteArray)
-	return rune(singleByteArray[0]), err
-}
-
-
-func (xmlReader *XMLReader) readTill(delim uint64) ([]rune, error) {
-	// reads the input file rune by rune till the target rune is found
-	//		or eof is reached.
-	// Note: it doesn't include the target rune in the read word.
-	var buffer []rune
-	for {
-		r, err := xmlReader.fileReader.Peek(1)
-		if err == nil {
-			// checking if the read rune is same as any of the delimiters' mask
-			if (delim & (1 << r[0])) != 0 {
-				// current char is same as one of the delimiters.
-				return buffer, nil
-			}
-
-			// moving file pointer one character ahead.
-			xmlReader.readARune()
-
-			// current character is not one of the delimiters.
-			buffer = append(buffer, rune(r[0]))
-		} else {
-			return buffer, err
-		}
-	}
-}
-
-
-func (xmlReader *XMLReader) peekNBytes(n int) ([]byte, error) {
-	return xmlReader.fileReader.Peek(n)
-}
-
-
-func (xmlReader *XMLReader) readNBytes(n int) (nextNBytes []byte, err error) {
-	next2Bytes := make([]byte, n)
-	_, err = xmlReader.fileReader.Read(next2Bytes)
-	return next2Bytes, err
-}
-
-
-func (xmlReader *XMLReader) ignoreWhiteSpace() (nWS int, err error) {
-	// advance the file pointer until a non-blank character is found.
-	// nWS: number of whitespaces which were stripped.
-	for {
-		char, err := xmlReader.peekARune()
-		if err != nil || !unicode.IsSpace(char) {
-			return nWS, err
-		}
-		nWS++
-		xmlReader.readARune()
-	}
-}
-
 
 func (xmlReader *XMLReader) readColonPair(delim uint64) (pair pair, colonFound bool, err error) {
 	// reads a:b into a Pair Object.
 	word, err := xmlReader.readTill(delim)
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	for i, r := range word {
 		if r == ':' {
@@ -149,11 +41,12 @@ func (xmlReader *XMLReader) readColonPair(delim uint64) (pair pair, colonFound b
 	return
 }
 
-
 func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 	// assumes the file pointer is pointing to the attribute name
-	pair, colonExists, err := xmlReader.readColonPair(WHITESPACE | 1 << '=')
-	if err != nil { return attr, err }
+	pair, colonExists, err := xmlReader.readColonPair(WHITESPACE | 1<<'=')
+	if err != nil {
+		return attr, err
+	}
 	if colonExists {
 		attr.SchemaName = pair.first.(string)
 		attr.Name = pair.second.(string)
@@ -161,10 +54,14 @@ func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 		attr.Name = pair.first.(string)
 	}
 	_, err = xmlReader.ignoreWhiteSpace()
-	if err != nil { return attr, err }
+	if err != nil {
+		return attr, err
+	}
 
 	nextRune, err := xmlReader.peekARune()
-	if err != nil { return attr, err }
+	if err != nil {
+		return attr, err
+	}
 	if nextRune != '=' {
 		err = errors.New("expected an assignment sign (=)")
 	}
@@ -176,8 +73,10 @@ func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 	}
 
 	// read till next quote.
-	word, err := xmlReader.readTill(WHITESPACE | 1 << byte(firstQuote))
-	if err != nil { return attr, err }
+	word, err := xmlReader.readTill(WHITESPACE | 1<<byte(firstQuote))
+	if err != nil {
+		return attr, err
+	}
 	secondQuote, _ := xmlReader.readARune()
 	if firstQuote != secondQuote {
 		chars, _ := xmlReader.peekNBytes(200)
@@ -188,7 +87,6 @@ func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 	attr.Value = string(word)
 	return attr, err
 }
-
 
 func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err error) {
 	// Opening Tag can be:
@@ -206,7 +104,9 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 	// forward file pointer until a not-space character is found.
 	// removing all blank characters before opening bracket.
 	_, err = xmlReader.ignoreWhiteSpace()
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	// find the opening angular bracket.
 	// after stripping all the spaces, the next character to be read should be '<'
@@ -236,8 +136,10 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 	}
 
 	// reading the next word till we reach a colon or a blank-char or a closing angular bracket.
-	pair, colonExist, err := xmlReader.readColonPair(1 << '>' | WHITESPACE | 1 << '/')
-	if err != nil { return }
+	pair, colonExist, err := xmlReader.readColonPair(1<<'>' | WHITESPACE | 1<<'/')
+	if err != nil {
+		return
+	}
 
 	if colonExist {
 		tag.SchemaName = pair.first.(string)
@@ -273,10 +175,14 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 	// "<[schemaName:]tagName WhiteSpace" is parsed till now.
 
 	_, err = xmlReader.ignoreWhiteSpace()
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	nextRune, err = xmlReader.peekARune()
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	if nextRune == '>' {
 		// opening tag didn't had any attributes.
@@ -287,14 +193,20 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 	// there are some attributes to be read.
 	for !(nextRune == '>' || nextRune == '/') {
 		attr, err := xmlReader.readAttribute()
-		if err != nil { return tag, blockComplete, err }
+		if err != nil {
+			return tag, blockComplete, err
+		}
 
 		tag.Attrs = append(tag.Attrs, attr)
 		_, err = xmlReader.ignoreWhiteSpace()
-		if err != nil { return tag, blockComplete, err }
+		if err != nil {
+			return tag, blockComplete, err
+		}
 
 		nextRune, err = xmlReader.peekARune()
-		if err != nil { return tag, blockComplete, err }
+		if err != nil {
+			return tag, blockComplete, err
+		}
 	}
 
 	nextRune, _ = xmlReader.readARune()
@@ -304,7 +216,9 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 		blockComplete = true
 
 		nextRune, err := xmlReader.peekARune()
-		if err != nil { return tag, blockComplete, err }
+		if err != nil {
+			return tag, blockComplete, err
+		}
 
 		if nextRune == '>' {
 			xmlReader.readARune() // advancing file pointer by 1.
@@ -314,7 +228,6 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 	}
 	return tag, blockComplete, err
 }
-
 
 func (xmlReader *XMLReader) readClosingTag() (closingTag Tag, err error) {
 	// expects white space to be stripped before receiving
@@ -326,7 +239,7 @@ func (xmlReader *XMLReader) readClosingTag() (closingTag Tag, err error) {
 		return closingTag, errors.New("expected a closing tag")
 	}
 
-	pair, colonExists, err := xmlReader.readColonPair(1 << '>' | WHITESPACE)
+	pair, colonExists, err := xmlReader.readColonPair(1<<'>' | WHITESPACE)
 	if err != nil {
 		return closingTag, err
 	}
@@ -351,7 +264,6 @@ func (xmlReader *XMLReader) readClosingTag() (closingTag Tag, err error) {
 	return closingTag, err
 }
 
-
 func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 	openingTag, blockComplete, err := xmlReader.readOpeningTag()
 	if err != nil {
@@ -367,7 +279,9 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 	xmlReader.ignoreWhiteSpace()
 	// <schemaName:tagName> is read till now.
 	nextRune, err := xmlReader.peekARune()
-	if err != nil { return block, err }
+	if err != nil {
+		return block, err
+	}
 
 	if nextRune != '<' {
 		//	the tag must be wrapping a string resource within it.
@@ -412,18 +326,15 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 	return block, err
 }
 
-
 func (xmlReader *XMLReader) Read() (rootBlock Block, err error) {
 	rootBlock, err = xmlReader.readBlock()
 	fmt.Println()
 	return rootBlock, err
 }
 
-
 func XMLReaderFromFileObject(fileObject *bufio.Reader) XMLReader {
 	return XMLReader{fileObject}
 }
-
 
 func XMLReaderFromFilePath(filePath string) (xmlReader XMLReader, err error) {
 	fileReader, err := os.Open(filePath)
