@@ -54,7 +54,11 @@ type Block struct {
 // returns next character in the file without affecting the file pointer
 func (xmlReader *XMLReader) peekARune() (r rune, err error) {
 	singleByte, err := xmlReader.fileReader.Peek(1)
-	return rune(singleByte[0]), err
+	if err != nil {
+		return r, err
+	} else {
+	 	return rune(singleByte[0]), nil
+	}
 }
 
 // returns next character in the file which advances the file pointer.
