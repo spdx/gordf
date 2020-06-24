@@ -2,6 +2,7 @@ package rdfloader
 
 import (
 	"bufio"
+	"os"
 	"unicode"
 )
 
@@ -9,6 +10,7 @@ const WHITESPACE = 1<<'\t' | 1<<'\n' | 1<<'\r' | 1<<' '
 
 type XMLReader struct {
 	fileReader *bufio.Reader
+	fileObj *os.File
 }
 
 /*

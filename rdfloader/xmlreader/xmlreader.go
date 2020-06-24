@@ -305,17 +305,30 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 
 func (xmlReader *XMLReader) Read() (rootBlock Block, err error) {
 	rootBlock, err = xmlReader.readBlock()
+	if xmlReader.fileObj != nil {
+		xmlReader.fileObj.Close()
+	}
 	return rootBlock, err
 }
 
 func XMLReaderFromFileObject(fileObject *bufio.Reader) XMLReader {
-	return XMLReader{fileObject}
+	// user will be responsible for closing the file.
+	return XMLReader{fileObject, nil}
 }
 
 func XMLReaderFromFilePath(filePath string) (xmlReader XMLReader, err error) {
-	fileReader, err := os.Open(filePath)
+	fileObj, err := os.Open(filePath)
 	if err != nil {
 		return xmlReader, err
 	}
-	return XMLReaderFromFileObject(bufio.NewReader(fileReader)), nil
+
+	xmlReader.fileReader = bufio.NewReader(fileObj)
+	xmlReader.fileObj = fileObj
+	return xmlReader, nil
+}
+
+func (xmlReader *XMLReader) CloseFileObj() {
+	if xmlReader.fileObj != nil {
+		xmlReader.fileObj.Close()
+	}
 }
