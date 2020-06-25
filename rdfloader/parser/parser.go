@@ -4,6 +4,7 @@ import (
 	"fmt"
 	xmlreader "github.com/RishabhBhatnagar/gordf/rdfloader/xmlreader"
 	"github.com/RishabhBhatnagar/gordf/uri"
+	"sync"
 )
 
 const RDFNS = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -12,6 +13,7 @@ type Parser struct {
 	Triples          []*Triple
 	schemaDefinition map[string]uri.URIRef
 	blankNodeGetter  BlankNodeGetter
+	wg sync.WaitGroup
 }
 
 type Triple struct {
@@ -74,11 +76,13 @@ func (parser *Parser) parseAttributes(parentNode Node, attributes []xmlreader.At
 }
 
 
-func (parser *Parser) parseChild(parentNode Node, block *xmlreader.Block) (err error) {
+func (parser *Parser) parseChild(parentNode Node, block *xmlreader.Block, errp *error)  {
+	// errp: pointer to the error
 	name, schemaName := block.OpeningTag.Name, block.OpeningTag.SchemaName
 	openingTagURI, err := parser.uriFromPair(schemaName, name)
 	if err != nil {
-		return err
+		*errp = err
+		return
 	}
 	openingTagNode := Node{IRI, openingTagURI.String()}
 	if len(block.Children) == 0 {
@@ -91,14 +95,17 @@ func (parser *Parser) parseChild(parentNode Node, block *xmlreader.Block) (err e
 	} else {
 		// there are children of current node.
 		for _, childBlock := range block.Children {
-			err = parser.parseChild(openingTagNode, childBlock)
-			if err != nil {
+			parser.wg.Add(1)
+			var newError error
+			parser.parseChild(openingTagNode, childBlock, &newError)
+			if newError!= nil {
+				*errp = newError
 				return
 			}
 		}
 	}
-	return parser.parseAttributes(openingTagNode, block.OpeningTag.Attrs)
-
+	*errp = parser.parseAttributes(openingTagNode, block.OpeningTag.Attrs)
+	parser.wg.Done()
 }
 
 
@@ -127,6 +134,7 @@ func New() (parser *Parser) {
 		Triples:          []*Triple{},
 		schemaDefinition: map[string]uri.URIRef{},
 		blankNodeGetter:  BlankNodeGetter{-1},
+		wg: sync.WaitGroup{},
 	}
 }
 
@@ -154,10 +162,12 @@ func (parser *Parser) Parse(filePath string) error {
 
 	// parse each child of the root block.
 	for _, childBlock := range rootBlock.Children {
-		err = parser.parseChild(rootNode, childBlock)
+		parser.wg.Add(1)
+		go parser.parseChild(rootNode, childBlock, &err)
 		if err != nil {
 			return err
 		}
 	}
+	parser.wg.Wait()
 	return nil
 }
