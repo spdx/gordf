@@ -68,7 +68,7 @@ func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 	}
 
 	// read till next quote or a blank character.
-	word, err := xmlReader.readTill(WHITESPACE | 1 << firstQuote)
+	word, err := xmlReader.readTill(WHITESPACE | 1 << uint(firstQuote))
 	if err != nil {
 		return attr, err
 	}
