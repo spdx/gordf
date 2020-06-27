@@ -9,6 +9,7 @@ package rdfloader
 import (
 	"bufio"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 )
@@ -144,15 +145,22 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 		tag.Name = pair.first.(string)
 	}
 
-	delim, _ := xmlReader.readARune() // read the delimiter.
-
+	delim, _ := xmlReader.peekARune() // read the delimiter.
+	if ((1 << uint(delim)) & WHITESPACE) != 0 {
+		// delimiter was a blank space.
+		// <schemaName:tagName [whitespace] was found.
+		xmlReader.ignoreWhiteSpace()
+	}
+	delim, _ = xmlReader.peekARune()
 	switch delim {
 	case '>':
 		// found end of tag. entire tag was parsed.
+		xmlReader.readARune()
 		return
 
 	case '/':
 		// "<[schemaName:]tag /" was parsed. expecting next character to be a closing angular bracket.
+		xmlReader.readARune()
 		blockComplete = true
 
 		nextRune, err := xmlReader.readARune()
@@ -166,7 +174,7 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 		return tag, blockComplete, err
 	}
 
-	// "<[schemaName:]tagName [WhiteSpace]" is parsed till now.
+	// "<[schemaName:]tagName" is parsed till now.
 
 	_, err = xmlReader.ignoreWhiteSpace()
 	if err != nil {
@@ -295,10 +303,9 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 
 	closingTag, err := xmlReader.readClosingTag()
 	if err != nil { return block, err }
-
-	if closingTag.Name != closingTag.Name || closingTag.SchemaName != closingTag.SchemaName {
+	if openingTag.Name != closingTag.Name || openingTag.SchemaName != closingTag.SchemaName {
 		// opening and closing tags are not same.
-		return block, errors.New("opening and closing tags doesn't match")
+		return block, fmt.Errorf("opening and closing tags doesn't match: opening tag; %v:%v, closing tag: %v:%v.", openingTag.SchemaName, openingTag.Name, closingTag.SchemaName, closingTag.Name)
 	}
 	return block, err
 }

@@ -31,10 +31,14 @@ func main() {
 		// in case the number of triples is less than the declared value.
 		maxNTriples = len(rdfParser.Triples)
 	}
-
-	for i := 0; i < maxNTriples; i++ {
-		fmt.Printf("Triple %v:\n", i + 1)
-		triple := rdfParser.Triples[i]
+	i := 0
+	for tripleHash := range rdfParser.Triples {
+		if i == maxNTriples {
+			break
+		}
+		i++
+		triple := rdfParser.Triples[tripleHash]
+		fmt.Printf("Triple %v:\n", i)
 		fmt.Println("\tSubject:", triple.Subject)
 		fmt.Println("\tPredicate:", triple.Predicate)
 		fmt.Println("\tObject:", triple.Object)
