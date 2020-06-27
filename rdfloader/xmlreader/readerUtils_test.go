@@ -69,12 +69,12 @@ func TestXMLReader_peekARune(t *testing.T) {
 
 func TestXMLReader_peekNBytes(t *testing.T) {
 	type TestCase struct {
-		input string
+		input       string
 		numberChars int
-		output []byte
-		err error
+		output      []byte
+		err         error
 	}
-	testCases := []TestCase {
+	testCases := []TestCase{
 		TestCase{"string", 3, []byte("str"), nil},
 		TestCase{"string", 6, []byte("string"), nil},
 		TestCase{"string", 0, []byte{}, nil},
@@ -94,12 +94,12 @@ func TestXMLReader_peekNBytes(t *testing.T) {
 
 func TestXMLReader_readARune(t *testing.T) {
 	type TestCase struct {
-		input string
+		input       string
 		numberChars int
-		output []byte
-		err error
+		output      []byte
+		err         error
 	}
-	testCases := []TestCase {
+	testCases := []TestCase{
 		TestCase{"string", 3, []byte("str"), nil},
 		TestCase{"string", 6, []byte("string"), nil},
 		TestCase{"string", 0, []byte{}, nil},

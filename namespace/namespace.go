@@ -1,6 +1,5 @@
 package namespace
 
-
 /*
 Provides a Namespace class.
 USAGE:
@@ -14,26 +13,22 @@ USAGE:
 	>> ns, _ := namespace.Namespace{uri.URIRef{"https://spdx.org/rdf/terms"}}
 */
 
-
 import (
 	"github.com/RishabhBhatnagar/gordf/uri"
 )
-
 
 type Namespace struct {
 	base uri.URIRef
 }
 
-
 // Provides an abstraction to create a Namespace directly from uri string.
-func New (namespace string) (ns Namespace, err error) {
+func New(namespace string) (ns Namespace, err error) {
 	uriref, err := uri.NewURIRef(namespace)
 	if err != nil {
 		return
 	}
-	return Namespace{ uriref }, nil
+	return Namespace{uriref}, nil
 }
-
 
 // Appends a fragment string at the end of the namespace string.
 func (ns *Namespace) Get(fragment string) uri.URIRef {

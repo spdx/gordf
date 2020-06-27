@@ -55,7 +55,7 @@ func TestURIRef_String(t *testing.T) {
 	// again, nothing much to test
 	uriString := "https://www.someuri.com/valid/uri"
 	uriref, _ := NewURIRef(uriString)
-	if uriref.String() != uriString + "#" {
-		t.Errorf("expected: %v, found: %v", uriString + "#", uriref.String())
+	if uriref.String() != uriString+"#" {
+		t.Errorf("expected: %v, found: %v", uriString+"#", uriref.String())
 	}
 }

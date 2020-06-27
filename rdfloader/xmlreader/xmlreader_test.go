@@ -10,8 +10,6 @@ import (
 	"time"
 )
 
-
-
 const SampleRDF = `
 <rdf:RDF
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -29,7 +27,6 @@ const SampleRDF = `
 </rdf:RDF>
 `
 
-
 type TestFile struct {
 	name string
 }
@@ -39,7 +36,7 @@ func InitTestFile(content string) (TestFile, error) {
 	// and returns the pointer to testfile struct.
 
 	file := TestFile{}
-	rand.Seed(time.Now().Unix())  // seed to ensure different pseudo-random number.
+	rand.Seed(time.Now().Unix()) // seed to ensure different pseudo-random number.
 	file.name = fmt.Sprintf("sample_file_for_test%v.rdf", rand.Int())
 
 	// writing the content to file and returning the err.
@@ -51,7 +48,7 @@ func (file *TestFile) Delete() {
 	// delete the temporary file
 	err := os.Remove(file.name)
 	if err != nil {
-		panic("couldn't delete test file " + file.name )  // didnt' expect any error
+		panic("couldn't delete test file " + file.name) // didnt' expect any error
 	}
 }
 
@@ -66,7 +63,9 @@ func TestXMLReaderFromFileObject(t *testing.T) {
 	// nothing much to test here.
 	// just creating a xmlReader.
 	fh, err := os.Open(testFile.name)
-	if err != nil { panic("cannot open test file") }
+	if err != nil {
+		panic("cannot open test file")
+	}
 	defer fh.Close()
 	XMLReaderFromFileObject(bufio.NewReader(fh))
 }
@@ -162,7 +161,7 @@ func TestXMLReader_readAttribute(t *testing.T) {
 func TestXMLReader_readBlock(t *testing.T) {
 }
 
-func TestXMLReader_readClosingTag(t *testing.T){
+func TestXMLReader_readClosingTag(t *testing.T) {
 }
 
 func TestXMLReader_readColonPair(t *testing.T) {

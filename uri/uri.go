@@ -1,6 +1,5 @@
 // Implementation of URIRef required for nodes in the rdf graph.
 
-
 package uri
 
 import (
@@ -9,7 +8,6 @@ import (
 	"net/url"
 	"strings"
 )
-
 
 type URIRef struct {
 	/**
@@ -25,7 +23,6 @@ type URIRef struct {
 	 */
 	uri string
 }
-
 
 // constructor for URIRef
 func NewURIRef(uri string) (uriref URIRef, err error) {
@@ -53,9 +50,8 @@ func NewURIRef(uri string) (uriref URIRef, err error) {
 	}
 
 	// validate uri after addition of # at the end
-	return URIRef{uri }, err
+	return URIRef{uri}, err
 }
-
 
 // join the fragment to the uri of current object
 func (uriref *URIRef) AddFragment(frag string) (retURI URIRef) {
@@ -66,13 +62,12 @@ func (uriref *URIRef) AddFragment(frag string) (retURI URIRef) {
 	}
 
 	if strings.HasPrefix(frag, "#") {
-		frag = frag[1 :]
+		frag = frag[1:]
 	}
 
 	// relative uri is fine, return a new object of uriref.
 	return URIRef{uriref.uri + frag}
 }
-
 
 // returns string representation of the uriref
 func (uriref *URIRef) String() string {

@@ -11,19 +11,20 @@ const RDFNS = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 
 type Parser struct {
 	Triples          map[string]*Triple
+	writeLock        sync.RWMutex
 	schemaDefinition map[string]uri.URIRef
 	blankNodeGetter  BlankNodeGetter
-	rdfNS uri.URIRef
-	wg sync.WaitGroup
+	rdfNS            uri.URIRef
+	wg               sync.WaitGroup
 }
 
 type Triple struct {
 	Subject, Predicate, Object *Node
 }
+
 func (triple *Triple) Hash() string {
 	return fmt.Sprintf("{%v; %v; %v}", triple.Subject, triple.Predicate, triple.Object)
 }
-
 
 func parseHeaderBlock(rootBlock xmlreader.Block) (map[string]uri.URIRef, error) {
 	// returns all the schema definitions in the root block.
@@ -43,7 +44,6 @@ func parseHeaderBlock(rootBlock xmlreader.Block) (map[string]uri.URIRef, error) 
 	return namespaceURI, nil
 }
 
-
 func (parser *Parser) uriFromPair(schemaName, name string) (mergedUri uri.URIRef, err error) {
 	// returns the uri representation of a pair of strings.
 	// name:schemaName is an example of pair.
@@ -59,19 +59,22 @@ func (parser *Parser) uriFromPair(schemaName, name string) (mergedUri uri.URIRef
 	return baseURI.AddFragment(name), nil
 }
 
-
 func (parser *Parser) appendTriple(triple *Triple) {
+	parser.writeLock.Lock()
 	parser.Triples[triple.Hash()] = triple
+	parser.writeLock.Unlock()
 }
 
 func (parser *Parser) getRDFAttributeIndex(tag xmlreader.Tag, attrName string) (index int, err error) {
 	/*
-	From all the attribute of the given tag, return the index of the attribute rdf:attrName
+		From all the attribute of the given tag, return the index of the attribute rdf:attrName
 	*/
 	index = -1
 	for i, attr := range tag.Attrs {
 		attrUri, err := parser.uriFromPair(attr.SchemaName, attr.Name)
-		if err != nil { break }
+		if err != nil {
+			break
+		}
 		if attrUri == parser.rdfNS.AddFragment(attrName) {
 			// current attribute is a rdf:attrName tag,
 			index = i
@@ -93,14 +96,18 @@ func (parser *Parser) nodeFromTag(openingTag xmlreader.Tag) (node *Node, err err
 
 	// checking if any of the attributes is a rdf:about attribute
 	index, err := parser.getRDFAttributeIndex(openingTag, "about")
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	var currentNode Node
 	if index == -1 {
 		// we didnt' find rdf:about in the attributes of the opening tag.
 		// returning a new blank node.
 		rdfNodeIDIndex, err := parser.getRDFAttributeIndex(openingTag, "nodeID")
-		if err != nil { return nil, err }
+		if err != nil {
+			return nil, err
+		}
 		if rdfNodeIDIndex == -1 {
 			currentNode = parser.blankNodeGetter.Get()
 		} else {
@@ -110,67 +117,82 @@ func (parser *Parser) nodeFromTag(openingTag xmlreader.Tag) (node *Node, err err
 		// we found a rdf:about tag.
 		currentNode = Node{
 			NodeType: IRI,
-			ID: openingTag.Attrs[index].Value,
+			ID:       openingTag.Attrs[index].Value,
 		}
 	}
 	return &currentNode, nil
 }
-
 
 func New() (parser *Parser) {
 	// creates a new parser object
 	rdfNS, _ := uri.NewURIRef(RDFNS)
 	return &Parser{
 		Triples:          map[string]*Triple{},
+		writeLock:        sync.RWMutex{},
 		schemaDefinition: map[string]uri.URIRef{"": uri.URIRef{}},
 		blankNodeGetter:  BlankNodeGetter{-1},
-		wg: sync.WaitGroup{},
-		rdfNS: rdfNS,
+		wg:               sync.WaitGroup{},
+		rdfNS:            rdfNS,
 	}
 }
 
-
-func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node) (err error) {
+func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, errp *error) {
 	/*
-	1. What is a block?
-	Ans: A rdf block is made up of
-			1. Root Node (IRI Ref or BlankNode) :: Subject
-			2. Link (IRI Ref)                   :: Object
-			3. anotherBlock (Literal or IRI Ref or Blank Node) :: Predicate
+		1. What is a block?
+		Ans: A rdf block is made up of
+				1. Root Node (IRI Ref or BlankNode) :: Subject
+				2. Link (IRI Ref)                   :: Object
+				3. anotherBlock (Literal or IRI Ref or Blank Node) :: Predicate
 
-	2. Example of a Block.
-		Sample RDF/XML input with non-blank subject and literal predicate.
-			<spdx:License rdf:about="http://spdx.org/licenses/Apache-2.0">
-				<spdx:licenseId>Apache-2.0</spdx:licenseId>
-			</spdx:License>
-		Output Components:
-			Subject:   http://spdx.org/licenses/Apache-2.0  (IRI Ref)
-			Object:    spdx:licenseId						(IRI Ref)
-			Predicate: Apacha-2.0							(Literal)
+		2. Example of a Block.
+			Sample RDF/XML input with non-blank subject and literal predicate.
+				<spdx:License rdf:about="http://spdx.org/licenses/Apache-2.0">
+					<spdx:licenseId>Apache-2.0</spdx:licenseId>
+				</spdx:License>
+			Output Components:
+				Subject:   http://spdx.org/licenses/Apache-2.0  (IRI Ref)
+				Object:    spdx:licenseId						(IRI Ref)
+				Predicate: Apacha-2.0							(Literal)
 
-		If the rdf:about attribute of the subject is removed, it will become a blank node.
+			If the rdf:about attribute of the subject is removed, it will become a blank node.
 
-	3. What is a node *Node?
-	Ans: effectively, node representation of the block parameter.
-		 node := parser.nodeFromTag(block)
+		3. What is a node *Node?
+		Ans: effectively, node representation of the block parameter.
+			 node := parser.nodeFromTag(block)
+
+		4. Parameter errp.
+			Pointer to an error variable.
+			used to report errors in a concurrent environment.
+			why pointer? Because go func() cannot return anything.
 	*/
 	for _, predicateBlock := range currBlock.Children {
-		predicateNode, err := parser.nodeFromTag(predicateBlock.OpeningTag)
-		if err != nil { return err }
-		openingTagUri, err := parser.uriFromPair(currBlock.OpeningTag.SchemaName, currBlock.OpeningTag.Name)
-		if err != nil { return err }
+		predicateNode, newErr := parser.nodeFromTag(predicateBlock.OpeningTag)
+		*errp = newErr
+		if *errp != nil {
+			return
+		}
+		openingTagUri, newErr := parser.uriFromPair(currBlock.OpeningTag.SchemaName, currBlock.OpeningTag.Name)
+		*errp = newErr
+		if *errp != nil {
+			return
+		}
 		predicateURI := parser.rdfNS.AddFragment("type")
 		parser.appendTriple(&Triple{
-			Subject: node,
+			Subject:   node,
 			Predicate: &Node{IRI, predicateURI.String()},
-			Object: &Node{IRI, openingTagUri.String()},
+			Object:    &Node{IRI, openingTagUri.String()},
 		})
-		if err != nil { return err }
+		if *errp != nil {
+			return
+		}
 		if len(predicateBlock.Children) == 0 {
 			// no children.
 			var objectString string
-			resIdx, err := parser.getRDFAttributeIndex(predicateBlock.OpeningTag, "resource")
-			if err != nil { return nil }
+			resIdx, newErr := parser.getRDFAttributeIndex(predicateBlock.OpeningTag, "resource")
+			*errp = newErr
+			if *errp != nil {
+				return
+			}
 			if resIdx != -1 {
 				// rdf:resource attribute is present
 				objectString = predicateBlock.OpeningTag.Attrs[resIdx].Value
@@ -181,28 +203,33 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node) (err er
 			// registering a new Triple:
 			// (currentNode) -> rdf:type -> (openingTagURI)
 			parser.appendTriple(&Triple{
-				Subject: node,
+				Subject:   node,
 				Predicate: predicateNode,
-				Object: &Node {LITERAL, objectString},
+				Object:    &Node{LITERAL, objectString},
 			})
 		}
-
 
 		// the predicate block has children
 		for _, objectBlock := range predicateBlock.Children {
-			objectNode, err := parser.nodeFromTag(objectBlock.OpeningTag)
-			if err != nil { return err }
+			objectNode, newErr := parser.nodeFromTag(objectBlock.OpeningTag)
+			*errp = newErr
+			if *errp != nil {
+				return
+			}
 
 			parser.appendTriple(&Triple{
-				Subject: node,
+				Subject:   node,
 				Predicate: predicateNode,
-				Object: objectNode,
+				Object:    objectNode,
 			})
-			err = parser.parseBlock(objectBlock, objectNode)
-			if err != nil { return err }
+			parser.wg.Add(1)
+			go parser.parseBlock(objectBlock, objectNode, errp)
+			if *errp != nil {
+				return
+			}
 		}
 	}
-	return nil
+	parser.wg.Done()
 }
 
 func (parser *Parser) Parse(filePath string) (err error) {
@@ -226,10 +253,16 @@ func (parser *Parser) Parse(filePath string) (err error) {
 
 	// root tag is set now.
 	for _, child := range rootBlock.Children {
+		parser.wg.Add(1)
 		childNode, err := parser.nodeFromTag(child.OpeningTag)
-		if err != nil { return err }
-		err = parser.parseBlock(child, childNode)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
+		go parser.parseBlock(child, childNode, &err)
+		if err != nil {
+			return err
+		}
 	}
+	parser.wg.Wait()
 	return nil
 }

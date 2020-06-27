@@ -20,7 +20,6 @@ import (
 	reader "github.com/RishabhBhatnagar/gordf/rdfloader/xmlreader"
 )
 
-
 func printBlockHeader(block reader.Block) {
 	// Prints name and attributes of the block.
 	fmt.Printf("Name: <%v:%v>\n", block.OpeningTag.SchemaName, block.OpeningTag.Name)
@@ -36,7 +35,6 @@ func printBlockHeader(block reader.Block) {
 	}
 }
 
-
 func main() {
 	// expects user to enter the file path along with it's name as an argument
 	// while running the file
@@ -49,7 +47,7 @@ func main() {
 		fmt.Printf("Usage: %v <input.rdf>\n", os.Args[0])
 		fmt.Printf("\tLoad the <input.rdf> file into memory and\n")
 		fmt.Printf("\tPrint some of it's tags.")
-		os.Exit(1)  // there was an error processing input.
+		os.Exit(1) // there was an error processing input.
 	}
 
 	// filePath indicates path to the file along with the filename.
@@ -58,7 +56,6 @@ func main() {
 	// in xmlReader, we've two options of reading the file.
 	// 		1. using the bufio file object
 	// 		2. using the file path
-
 
 	// Method 1: using file objects
 	fileHandler, err := os.Open(filePath)
@@ -74,7 +71,6 @@ func main() {
 	}
 	fileHandler.Close()
 
-
 	// Method 2: using file paths
 	xmlReader2, err := reader.XMLReaderFromFilePath(filePath)
 	if err != nil {
@@ -88,7 +84,7 @@ func main() {
 	}
 
 	// comparing the results from both the reader instances.
-	if !reflect.DeepEqual(root1, root2){
+	if !reflect.DeepEqual(root1, root2) {
 		fmt.Println("outputs from both approach is not same.")
 		fmt.Println("Something wrong with the implementation")
 		os.Exit(1)
@@ -100,7 +96,6 @@ func main() {
 	printBlockHeader(root1)
 	fmt.Println(strings.Repeat("#", 80))
 
-
 	// maximum number of children to print
 	maxNChild := 10
 
@@ -111,7 +106,7 @@ func main() {
 		}
 		fmt.Println()
 		fmt.Println(strings.Repeat("=", 80))
-		fmt.Printf("Child %v:\n", i + 1)
+		fmt.Printf("Child %v:\n", i+1)
 		printBlockHeader(*childBlock)
 		fmt.Println(strings.Repeat("=", 80))
 	}

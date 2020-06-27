@@ -16,7 +16,7 @@ func main() {
 		fmt.Printf("Usage: %v <input.rdf>\n", os.Args[0])
 		fmt.Printf("\tTo parse the <input.rdf> file and\n")
 		fmt.Printf("\tPrint some of it's Triples")
-		os.Exit(1)  // there was an error processing input.
+		os.Exit(1) // there was an error processing input.
 	}
 
 	filePath := os.Args[1]

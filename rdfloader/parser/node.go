@@ -12,8 +12,9 @@ const (
 
 type Node struct {
 	NodeType NODETYPE
-	ID      string
+	ID       string
 }
+
 func (node *Node) String() string {
 	return fmt.Sprintf("(%v, %v)", node.NodeType, node.ID)
 }
@@ -24,15 +25,15 @@ type BlankNodeGetter struct {
 
 func (getter *BlankNodeGetter) Get() Node {
 	getter.lastid += 1
-	return Node {
+	return Node{
 		NodeType: BLANK,
-		ID:      fmt.Sprintf("N%v", getter.lastid),
+		ID:       fmt.Sprintf("N%v", getter.lastid),
 	}
 }
 
 func (getter *BlankNodeGetter) GetFromId(id string) Node {
-	return Node {
+	return Node{
 		NodeType: BLANK,
-		ID: fmt.Sprintf("N%v", id),
+		ID:       fmt.Sprintf("N%v", id),
 	}
 }

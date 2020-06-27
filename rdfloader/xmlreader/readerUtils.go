@@ -10,7 +10,7 @@ const WHITESPACE = 1<<'\t' | 1<<'\n' | 1<<'\r' | 1<<' '
 
 type XMLReader struct {
 	fileReader *bufio.Reader
-	fileObj *os.File
+	fileObj    *os.File
 }
 
 /*
@@ -59,7 +59,7 @@ func (xmlReader *XMLReader) peekARune() (r rune, err error) {
 	if err != nil {
 		return r, err
 	} else {
-	 	return rune(singleByte[0]), nil
+		return rune(singleByte[0]), nil
 	}
 }
 

@@ -43,8 +43,10 @@ func (xmlReader *XMLReader) readColonPair(delim uint64) (pair pair, colonFound b
 
 func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 	// assumes the file pointer is pointing to the attribute name
-	pair, colonExists, err := xmlReader.readColonPair(WHITESPACE | 1 << '=')
-	if err != nil { return }
+	pair, colonExists, err := xmlReader.readColonPair(WHITESPACE | 1<<'=')
+	if err != nil {
+		return
+	}
 
 	if colonExists {
 		attr.SchemaName = pair.first.(string)
@@ -53,7 +55,9 @@ func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 		attr.Name = pair.first.(string)
 	}
 	_, err = xmlReader.ignoreWhiteSpace()
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	nextRune, err := xmlReader.readARune()
 	if err != nil {
@@ -69,7 +73,7 @@ func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 	}
 
 	// read till next quote or a blank character.
-	word, err := xmlReader.readTill(WHITESPACE | 1 << uint(firstQuote))
+	word, err := xmlReader.readTill(WHITESPACE | 1<<uint(firstQuote))
 	if err != nil {
 		return attr, err
 	}
@@ -100,7 +104,7 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, isProlog, blockComplete b
 	// removing all blank characters before opening bracket.
 	_, err = xmlReader.ignoreWhiteSpace()
 	if err != nil {
-		return  		// possibly an eof error
+		return // possibly an eof error
 	}
 
 	// find the opening angular bracket.
@@ -126,7 +130,9 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, isProlog, blockComplete b
 	xmlReader.ignoreWhiteSpace() // there shouldn't be any spaces in a well-formed rdf/xml document.
 
 	nextRune, err := xmlReader.peekARune()
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	if nextRune == '/' {
 		return tag, isProlog, blockComplete, errors.New("unexpected closing tag")
@@ -138,15 +144,21 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, isProlog, blockComplete b
 		xmlReader.readARune()
 		// read till the next question mark.
 		_, err := xmlReader.readTill(1 << '?')
-		if err != nil { return tag, isProlog, blockComplete, err }
+		if err != nil {
+			return tag, isProlog, blockComplete, err
+		}
 		// ignore the question mark character.
 		xmlReader.readARune()
 
 		_, err = xmlReader.ignoreWhiteSpace()
-		if err != nil { return tag, isProlog, blockComplete, err }
+		if err != nil {
+			return tag, isProlog, blockComplete, err
+		}
 
 		nextRune, err = xmlReader.peekARune()
-		if err != nil { return tag, isProlog, blockComplete, err }
+		if err != nil {
+			return tag, isProlog, blockComplete, err
+		}
 		if nextRune == '>' {
 			// ignore >
 			xmlReader.readARune()
@@ -156,8 +168,10 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, isProlog, blockComplete b
 	}
 
 	// reading the next word till we reach a colon or a blank-char or a closing angular bracket.
-	pair, colonExist, err := xmlReader.readColonPair(1 << '>' | WHITESPACE | 1 << '/')
-	if err != nil { return }
+	pair, colonExist, err := xmlReader.readColonPair(1<<'>' | WHITESPACE | 1<<'/')
+	if err != nil {
+		return
+	}
 
 	if colonExist {
 		tag.SchemaName = pair.first.(string)
@@ -210,7 +224,7 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, isProlog, blockComplete b
 	if nextRune == '>' {
 		// opening tag didn't had any attributes.
 		tag.Name = string(word)
-		xmlReader.readARune()  // consuming the '>' character
+		xmlReader.readARune() // consuming the '>' character
 		return
 	}
 
@@ -218,14 +232,20 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, isProlog, blockComplete b
 	// read attributes till the next character is a forward slash or a '>'
 	for !(nextRune == '>' || nextRune == '/') {
 		attr, err := xmlReader.readAttribute()
-		if err != nil { return tag, isProlog, blockComplete, err }
+		if err != nil {
+			return tag, isProlog, blockComplete, err
+		}
 
 		tag.Attrs = append(tag.Attrs, attr)
 		_, err = xmlReader.ignoreWhiteSpace()
-		if err != nil { return tag, isProlog, blockComplete, err }
+		if err != nil {
+			return tag, isProlog, blockComplete, err
+		}
 
 		nextRune, err = xmlReader.peekARune()
-		if err != nil { return tag, isProlog, blockComplete, err }
+		if err != nil {
+			return tag, isProlog, blockComplete, err
+		}
 	}
 
 	nextRune, _ = xmlReader.readARune()
@@ -235,7 +255,9 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, isProlog, blockComplete b
 		blockComplete = true
 
 		nextRune, err := xmlReader.readARune()
-		if err != nil { return tag, isProlog, blockComplete, err }
+		if err != nil {
+			return tag, isProlog, blockComplete, err
+		}
 
 		if nextRune != '>' {
 			err = errors.New("expected closing angular bracket after /")
@@ -255,7 +277,7 @@ func (xmlReader *XMLReader) readClosingTag() (closingTag Tag, err error) {
 		return closingTag, errors.New("expected a closing tag")
 	}
 
-	pair, colonExists, err := xmlReader.readColonPair(1 << '>' | WHITESPACE)
+	pair, colonExists, err := xmlReader.readColonPair(1<<'>' | WHITESPACE)
 	if err != nil {
 		return closingTag, err
 	}
@@ -281,8 +303,12 @@ func (xmlReader *XMLReader) readClosingTag() (closingTag Tag, err error) {
 
 func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 	openingTag, isProlog, blockComplete, err := xmlReader.readOpeningTag()
-	if isProlog { return xmlReader.readBlock() }
-	if err != nil { return }
+	if isProlog {
+		return xmlReader.readBlock()
+	}
+	if err != nil {
+		return
+	}
 	block.OpeningTag = openingTag
 
 	if blockComplete {
@@ -294,18 +320,24 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 
 	// <schemaName:tagName [attributes] > is read till now.
 	nextRune, err := xmlReader.peekARune()
-	if err != nil { return }
+	if err != nil {
+		return
+	}
 
 	if nextRune != '<' {
 		// the tag must be wrapping a string resource within it.
 		// tag is of type <schemaName:tagName> value </schemaName:tagName>
 		word, err := xmlReader.readTill(1 << '<') // according to the example, word=value.
-		if err != nil { return block, err }
+		if err != nil {
+			return block, err
+		}
 		block.Value = string(word)
 	} else {
 		// expecting a new tag or closing tag of the currently read tag.
 		nextTwoBytes, err := xmlReader.peekNBytes(2)
-		if err != nil { return block, err }
+		if err != nil {
+			return block, err
+		}
 
 		// while we don't get a closing tag, read the children.
 		for string(nextTwoBytes) != "</" {
@@ -319,12 +351,16 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 
 			xmlReader.ignoreWhiteSpace()
 			nextTwoBytes, err = xmlReader.peekNBytes(2)
-			if err != nil { return block, err }
+			if err != nil {
+				return block, err
+			}
 		}
 	}
 
 	closingTag, err := xmlReader.readClosingTag()
-	if err != nil { return block, err }
+	if err != nil {
+		return block, err
+	}
 	if openingTag.Name != closingTag.Name || openingTag.SchemaName != closingTag.SchemaName {
 		// opening and closing tags are not same.
 		return block, fmt.Errorf("opening and closing tags doesn't match: opening tag; %v:%v, closing tag: %v:%v.", openingTag.SchemaName, openingTag.Name, closingTag.SchemaName, closingTag.Name)

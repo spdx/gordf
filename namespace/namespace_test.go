@@ -12,7 +12,6 @@ func TestNew(t *testing.T) {
 	}
 }
 
-
 func TestNamespace_Get(t *testing.T) {
 	sampleURI := "https://www.spdx.org/rdf/terms"
 	sampleNS, err := New(sampleURI)
@@ -22,8 +21,7 @@ func TestNamespace_Get(t *testing.T) {
 	}
 	fragment := "name"
 	indexedURI := sampleNS.Get(fragment)
-	if indexedURI.String() != sampleURI + "#" + fragment {
+	if indexedURI.String() != sampleURI+"#"+fragment {
 		t.Errorf("error adding fragment to the base URI")
 	}
 }
-
