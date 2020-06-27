@@ -83,7 +83,7 @@ func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 	return attr, nil
 }
 
-func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err error) {
+func (xmlReader *XMLReader) readOpeningTag() (tag Tag, isProlog, blockComplete bool, err error) {
 	// Opening Tag can be:
 	//		<tag[:schema]
 	//			[attr=attr_val]
@@ -111,14 +111,14 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 	if err == io.EOF {
 		// we reached the end of the file while searching for a new tag.
 		if len(word) > 0 {
-			return tag, blockComplete, errors.New("found stray characters at EOF")
+			return tag, isProlog, blockComplete, errors.New("found stray characters at EOF")
 		} else {
 			// no new tags were found.
-			return tag, blockComplete, io.EOF
+			return tag, isProlog, blockComplete, io.EOF
 		}
 	}
 	if len(word) != 0 {
-		return tag, blockComplete, errors.New("found extra chars before tag start")
+		return tag, isProlog, blockComplete, errors.New("found extra chars before tag start")
 	}
 
 	// next char is '<'.
@@ -129,14 +129,35 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 	if err != nil { return }
 
 	if nextRune == '/' {
-		return tag, blockComplete, errors.New("unexpected closing tag")
+		return tag, isProlog, blockComplete, errors.New("unexpected closing tag")
+	}
+	if nextRune == '?' {
+		// a prolog is found.
+		isProlog = true
+		// ignore the question mark character.
+		xmlReader.readARune()
+		// read till the next question mark.
+		_, err := xmlReader.readTill(1 << '?')
+		if err != nil { return tag, isProlog, blockComplete, err }
+		// ignore the question mark character.
+		xmlReader.readARune()
+
+		_, err = xmlReader.ignoreWhiteSpace()
+		if err != nil { return tag, isProlog, blockComplete, err }
+
+		nextRune, err = xmlReader.peekARune()
+		if err != nil { return tag, isProlog, blockComplete, err }
+		if nextRune == '>' {
+			// ignore >
+			xmlReader.readARune()
+			return tag, isProlog, blockComplete, err
+		}
+		err = fmt.Errorf("expected a > char after ?. Found %v", nextRune)
 	}
 
 	// reading the next word till we reach a colon or a blank-char or a closing angular bracket.
 	pair, colonExist, err := xmlReader.readColonPair(1 << '>' | WHITESPACE | 1 << '/')
-	if err != nil {
-		return
-	}
+	if err != nil { return }
 
 	if colonExist {
 		tag.SchemaName = pair.first.(string)
@@ -165,13 +186,13 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 
 		nextRune, err := xmlReader.readARune()
 		if err != nil {
-			return tag, blockComplete, err
+			return tag, isProlog, blockComplete, err
 		}
 
 		if nextRune != '>' {
 			err = errors.New("expected closing angular bracket after /")
 		}
-		return tag, blockComplete, err
+		return tag, isProlog, blockComplete, err
 	}
 
 	// "<[schemaName:]tagName" is parsed till now.
@@ -197,14 +218,14 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 	// read attributes till the next character is a forward slash or a '>'
 	for !(nextRune == '>' || nextRune == '/') {
 		attr, err := xmlReader.readAttribute()
-		if err != nil { return tag, blockComplete, err }
+		if err != nil { return tag, isProlog, blockComplete, err }
 
 		tag.Attrs = append(tag.Attrs, attr)
 		_, err = xmlReader.ignoreWhiteSpace()
-		if err != nil { return tag, blockComplete, err }
+		if err != nil { return tag, isProlog, blockComplete, err }
 
 		nextRune, err = xmlReader.peekARune()
-		if err != nil { return tag, blockComplete, err }
+		if err != nil { return tag, isProlog, blockComplete, err }
 	}
 
 	nextRune, _ = xmlReader.readARune()
@@ -214,13 +235,13 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, blockComplete bool, err e
 		blockComplete = true
 
 		nextRune, err := xmlReader.readARune()
-		if err != nil { return tag, blockComplete, err }
+		if err != nil { return tag, isProlog, blockComplete, err }
 
 		if nextRune != '>' {
 			err = errors.New("expected closing angular bracket after /")
 		}
 	}
-	return tag, blockComplete, err
+	return tag, isProlog, blockComplete, err
 }
 
 func (xmlReader *XMLReader) readClosingTag() (closingTag Tag, err error) {
@@ -259,7 +280,8 @@ func (xmlReader *XMLReader) readClosingTag() (closingTag Tag, err error) {
 }
 
 func (xmlReader *XMLReader) readBlock() (block Block, err error) {
-	openingTag, blockComplete, err := xmlReader.readOpeningTag()
+	openingTag, isProlog, blockComplete, err := xmlReader.readOpeningTag()
+	if isProlog { return xmlReader.readBlock() }
 	if err != nil { return }
 	block.OpeningTag = openingTag
 
