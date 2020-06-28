@@ -10,17 +10,15 @@ import (
 	"time"
 )
 
-func newTestFile(content string, t *testing.T) (filenames string, teardown func(), err error) {
+func newTestFile(content string) (filenames string, teardown func(), err error) {
 	rand.Seed(time.Now().UnixNano()) // to ensure a pseudo random number every time.
 	fileName := fmt.Sprintf("random_file_%v.rdf", rand.Int())
-	fmt.Println("created", fileName)
 	err = ioutil.WriteFile(fileName, []byte(content), 777)
 	if err != nil {
 		return
 	}
 	return fileName, func() {
 		if _, err = os.Stat(fileName); err == nil {
-			t.Log("deleted", fileName)
 			// file exists
 			os.Remove(fileName)
 		}
@@ -60,7 +58,7 @@ func TestParser_Parse(t *testing.T) {
 				xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 				xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
 			</rdf:RDF>`
-		filename, teardown, err := newTestFile(emptyValidRDF, t)
+		filename, teardown, err := newTestFile(emptyValidRDF)
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -93,7 +91,7 @@ func TestParser_Parse(t *testing.T) {
 			xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 			xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
 			</rdf:RDF>`
-		filename, teardown, err := newTestFile(emptyRDFWithProlog, t)
+		filename, teardown, err := newTestFile(emptyRDFWithProlog)
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -123,7 +121,7 @@ func TestParser_Parse(t *testing.T) {
 	// Invalid RDF with stray characters before closing tag.
 	func() {
 		invalidRDF := "......<rdf:RDF>"
-		filename, teardown, err := newTestFile(invalidRDF, t)
+		filename, teardown, err := newTestFile(invalidRDF)
 		if err != nil {
 			t.Errorf("error creating a test file: %v", err)
 		}
@@ -156,7 +154,7 @@ func TestParser_Parse(t *testing.T) {
 					<example:Tag> Name </example:Tag>
 				</rdf:Description>
 			</rdf:RDF>`
-		filename, teardown, err := newTestFile(twoTripleRDF, t)
+		filename, teardown, err := newTestFile(twoTripleRDF)
 		if err != nil {
 			t.Errorf("error creating a test file: %v", err)
 		}
@@ -190,7 +188,7 @@ func TestParser_Parse(t *testing.T) {
 				</rdf:Description>
 				<example:extraTag>
 			</rdf:RDF>`
-		filename, teardown, _ := newTestFile(extraTagRDF, t)
+		filename, teardown, _ := newTestFile(extraTagRDF)
 		defer teardown()
 		xmlReader, err := xmlreader.XMLReaderFromFilePath(filename)
 		if err != nil {
@@ -213,7 +211,7 @@ func TestParser_Parse(t *testing.T) {
 			<rdf:RDF
 				xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 			</rdf:rdf>`
-		filename, teardown, _ := newTestFile(invalidRDF, t)
+		filename, teardown, _ := newTestFile(invalidRDF)
 		xmlReader, err := xmlreader.XMLReaderFromFilePath(filename)
 		if err != nil {
 			return
