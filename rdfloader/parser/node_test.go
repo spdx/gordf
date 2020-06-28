@@ -32,3 +32,29 @@ func TestBlankNodeGetter_Get(t *testing.T) {
 		t.Errorf("Expected node to be %v, found %v", "N0", firstBlankNode.ID)
 	}
 }
+
+func TestBlankNodeGetter_GetFromId(t *testing.T) {
+	// default blank node getter:
+	getter := BlankNodeGetter{} // id starts with 1
+	blankNode := getter.Get()
+
+	if blankNode.ID != "N1" {
+		t.Errorf("expected first node's id to be N1, found %v", blankNode.ID)
+	}
+
+	blankNodeA0 := getter.GetFromId("A0")
+	if blankNodeA0.ID != "NA0" {
+		t.Errorf("expected first node's id to be NA0, found %v", blankNodeA0.ID)
+	}
+}
+
+func TestNode_String(t *testing.T) {
+	// a node is wrapped in a tuple with (NodeType, ID)
+	node := Node{
+		BLANK,
+		"",
+	}
+	if node.String() != "(BNODE, )" {
+		t.Errorf("String representation of blank node with empty id should be (BNODE, ). Found %v", node.String())
+	}
+}
