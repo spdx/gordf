@@ -162,18 +162,7 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, errp *e
 	parser.wg.Done()
 }
 
-func (parser *Parser) Parse(filePath string) (err error) {
-	// reader for xml file
-	reader, err := xmlreader.XMLReaderFromFilePath(filePath)
-	if err != nil {
-		return err
-	}
-	// parsing the xml file
-	rootBlock, err := reader.Read()
-	if err != nil {
-		return err
-	}
-
+func (parser *Parser) Parse(rootBlock xmlreader.Block) (err error) {
 	// set all the schema definitions in the root block.
 	schemaDefinition, err := parseHeaderBlock(rootBlock)
 	if err != nil {
