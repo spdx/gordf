@@ -30,9 +30,9 @@ type Attribute struct {
 	Value      string
 }
 
-type pair struct {
-	first  interface{}
-	second interface{}
+type Pair struct {
+	First  interface{}
+	Second interface{}
 }
 
 type Tag struct {

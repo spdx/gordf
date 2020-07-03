@@ -14,8 +14,9 @@ import (
 	"os"
 )
 
-func (xmlReader *XMLReader) readColonPair(delim uint64) (pair pair, colonFound bool, err error) {
-	// reads a:b into a Pair Object.
+// reads a:b into a Pair Object.
+func (xmlReader *XMLReader) readColonPair(delim uint64) (pair Pair, colonFound bool, err error) {
+	// file pointer must point to the start of the attribute.
 	word, err := xmlReader.readTill(delim)
 	if err != nil {
 		return
@@ -24,19 +25,19 @@ func (xmlReader *XMLReader) readColonPair(delim uint64) (pair pair, colonFound b
 	for i, r := range word {
 		if r == ':' {
 			colonFound = true
-			pair.first = string(word[:i])
+			pair.First = string(word[:i])
 			latter := string(word[i+1:])
 			if len(latter) == 0 {
 				err = errors.New("expected a word after colon")
 				return
 			}
-			pair.second = latter
+			pair.Second = latter
 			break
 		}
 	}
 	if !colonFound {
 		// no colon was found.
-		pair.first = string(word)
+		pair.First = string(word)
 	}
 	return
 }
@@ -49,10 +50,10 @@ func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 	}
 
 	if colonExists {
-		attr.SchemaName = pair.first.(string)
-		attr.Name = pair.second.(string)
+		attr.SchemaName = pair.First.(string)
+		attr.Name = pair.Second.(string)
 	} else {
-		attr.Name = pair.first.(string)
+		attr.Name = pair.First.(string)
 	}
 	_, err = xmlReader.ignoreWhiteSpace()
 	if err != nil {
@@ -174,10 +175,10 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, isProlog, blockComplete b
 	}
 
 	if colonExist {
-		tag.SchemaName = pair.first.(string)
-		tag.Name = pair.second.(string)
+		tag.SchemaName = pair.First.(string)
+		tag.Name = pair.Second.(string)
 	} else {
-		tag.Name = pair.first.(string)
+		tag.Name = pair.First.(string)
 	}
 
 	delim, _ := xmlReader.peekARune() // read the delimiter.
@@ -282,10 +283,10 @@ func (xmlReader *XMLReader) readClosingTag() (closingTag Tag, err error) {
 		return closingTag, err
 	}
 	if colonExists {
-		closingTag.SchemaName = pair.first.(string)
-		closingTag.Name = pair.second.(string)
+		closingTag.SchemaName = pair.First.(string)
+		closingTag.Name = pair.Second.(string)
 	} else {
-		closingTag.Name = pair.first.(string)
+		closingTag.Name = pair.First.(string)
 	}
 
 	xmlReader.ignoreWhiteSpace()
@@ -370,10 +371,23 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 
 func (xmlReader *XMLReader) Read() (rootBlock Block, err error) {
 	rootBlock, err = xmlReader.readBlock()
+	if err != nil {
+		return rootBlock, err
+	}
 	if xmlReader.fileObj != nil {
 		xmlReader.fileObj.Close()
 	}
-	return rootBlock, err
+
+	// after reading the first block ( the root block ),
+	// there shouldn't be any other tags or characters.
+	_, err = xmlReader.ignoreWhiteSpace()
+	if err == nil {
+		// some other chars were found after reading the rootblock.
+		// expected err to be an EOF error.
+		nextRune, _ := xmlReader.peekARune()
+		return rootBlock, fmt.Errorf("unexpected chars after reading root block. Char Found: %v", string(nextRune))
+	}
+	return rootBlock, nil
 }
 
 func XMLReaderFromFileObject(fileObject *bufio.Reader) XMLReader {
