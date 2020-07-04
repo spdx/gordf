@@ -97,18 +97,22 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, errp *e
 			why pointer? Because go func() cannot return anything.
 	*/
 	for _, predicateBlock := range currBlock.Children {
-		predicateNode, newErr := parser.nodeFromTag(predicateBlock.OpeningTag)
+
+		// predicateURI can't be a blank node. It has to be a URI Reference
+		//     according to https://www.w3.org/TR/rdf-concepts/#dfn-predicate
+		predicateURI, newErr := parser.uriFromPair(predicateBlock.OpeningTag.SchemaName, predicateBlock.OpeningTag.Name)
 		if newErr != nil {
-			*errp = newErr
+			*errp = fmt.Errorf("error creating a reference URI link for the predicate block. %v", newErr)
 			return
 		}
+		predicateNode := &Node{NodeType: IRI, ID: predicateURI.String()}
 
 		openingTagUri, newErr := parser.uriFromPair(currBlock.OpeningTag.SchemaName, currBlock.OpeningTag.Name)
 		if newErr != nil {
 			*errp = newErr
 			return
 		}
-		predicateURI := parser.rdfNS.AddFragment("type")
+		predicateURI = parser.rdfNS.AddFragment("type")
 		parser.appendTriple(&Triple{
 			Subject:   node,
 			Predicate: &Node{IRI, predicateURI.String()},
