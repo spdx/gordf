@@ -1,28 +1,15 @@
 package parser
 
 import (
-	"fmt"
+	"bufio"
+	"bytes"
 	xmlreader "github.com/RishabhBhatnagar/gordf/rdfloader/xmlreader"
-	"io/ioutil"
-	"math/rand"
-	"os"
+	"io"
 	"testing"
-	"time"
 )
 
-func newTestFile(content string) (filenames string, teardown func(), err error) {
-	rand.Seed(time.Now().UnixNano()) // to ensure a pseudo random number every time.
-	fileName := fmt.Sprintf("random_file_%v.rdf", rand.Int())
-	err = ioutil.WriteFile(fileName, []byte(content), 777)
-	if err != nil {
-		return
-	}
-	return fileName, func() {
-		if _, err = os.Stat(fileName); err == nil {
-			// file exists
-			os.Remove(fileName)
-		}
-	}, nil
+func xmlreaderFromString(fileContent string) xmlreader.XMLReader {
+	return xmlreader.XMLReaderFromFileObject(bufio.NewReader(io.Reader(bytes.NewReader([]byte(fileContent)))))
 }
 
 func TestTriple_Hash(t *testing.T) {
@@ -40,7 +27,6 @@ func TestTriple_Hash(t *testing.T) {
 
 func TestNew(t *testing.T) {
 	// testing if the initialized parameters are okay.
-
 	newParser := New()
 
 	// Triples should be initially empty
@@ -58,16 +44,8 @@ func TestParser_Parse(t *testing.T) {
 				xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 				xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
 			</rdf:RDF>`
-		filename, teardown, err := newTestFile(emptyValidRDF)
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-		defer teardown()
 		rdfParser := New()
-		xmlReader, err := xmlreader.XMLReaderFromFilePath(filename)
-		if err != nil {
-			return
-		}
+		xmlReader := xmlreaderFromString(emptyValidRDF)
 		rootBlock, err := xmlReader.Read()
 		if err != nil {
 			return
@@ -91,15 +69,7 @@ func TestParser_Parse(t *testing.T) {
 			xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 			xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
 			</rdf:RDF>`
-		filename, teardown, err := newTestFile(emptyRDFWithProlog)
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-		defer teardown()
-		xmlReader, err := xmlreader.XMLReaderFromFilePath(filename)
-		if err != nil {
-			return
-		}
+		xmlReader := xmlreaderFromString(emptyRDFWithProlog)
 		rootBlock, err := xmlReader.Read()
 		if err != nil {
 			return
@@ -121,16 +91,7 @@ func TestParser_Parse(t *testing.T) {
 	// Invalid RDF with stray characters before closing tag.
 	func() {
 		invalidRDF := "......<rdf:RDF>"
-		filename, teardown, err := newTestFile(invalidRDF)
-		if err != nil {
-			t.Errorf("error creating a test file: %v", err)
-		}
-		defer teardown()
-
-		xmlReader, err := xmlreader.XMLReaderFromFilePath(filename)
-		if err != nil {
-			return
-		}
+		xmlReader := xmlreaderFromString(invalidRDF)
 		rootBlock, err := xmlReader.Read()
 		if err != nil {
 			return
@@ -154,15 +115,7 @@ func TestParser_Parse(t *testing.T) {
 					<example:Tag> Name </example:Tag>
 				</rdf:Description>
 			</rdf:RDF>`
-		filename, teardown, err := newTestFile(twoTripleRDF)
-		if err != nil {
-			t.Errorf("error creating a test file: %v", err)
-		}
-		defer teardown()
-		xmlReader, err := xmlreader.XMLReaderFromFilePath(filename)
-		if err != nil {
-			return
-		}
+		xmlReader := xmlreaderFromString(twoTripleRDF)
 		rootBlock, err := xmlReader.Read()
 		if err != nil {
 			return
@@ -188,12 +141,7 @@ func TestParser_Parse(t *testing.T) {
 				</rdf:Description>
 				<example:extraTag>
 			</rdf:RDF>`
-		filename, teardown, _ := newTestFile(extraTagRDF)
-		defer teardown()
-		xmlReader, err := xmlreader.XMLReaderFromFilePath(filename)
-		if err != nil {
-			return
-		}
+		xmlReader := xmlreaderFromString(extraTagRDF)
 		rootBlock, err := xmlReader.Read()
 		if err != nil {
 			return
@@ -211,12 +159,7 @@ func TestParser_Parse(t *testing.T) {
 			<rdf:RDF
 				xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
 			</rdf:rdf>`
-		filename, teardown, _ := newTestFile(invalidRDF)
-		xmlReader, err := xmlreader.XMLReaderFromFilePath(filename)
-		if err != nil {
-			return
-		}
-		defer teardown()
+		xmlReader := xmlreaderFromString(invalidRDF)
 		rootBlock, err := xmlReader.Read()
 		if err != nil {
 			return
