@@ -20,7 +20,11 @@ func (parser *Parser) appendTriple(triple *Triple) {
 	//		can read from the data structure but at a time only one writer can
 	//		access the data structure.
 	parser.writeLock.Lock()
-	parser.Triples[triple.Hash()] = triple
+	if _, exists := parser.setTriples[triple.Hash()]; !exists {
+		// append to the map and triples' set if it doesn't already exist in the map.
+		parser.setTriples[triple.Hash()] = triple
+		parser.Triples = append(parser.Triples, triple)
+	}
 	parser.writeLock.Unlock()
 }
 

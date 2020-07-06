@@ -10,7 +10,8 @@ import (
 const RDFNS = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 
 type Parser struct {
-	Triples          map[string]*Triple
+	setTriples       map[string]*Triple
+	Triples          []*Triple
 	writeLock        sync.RWMutex
 	schemaDefinition map[string]uri.URIRef
 	blankNodeGetter  BlankNodeGetter
@@ -59,7 +60,8 @@ func New() (parser *Parser) {
 	// creates a new parser object
 	rdfNS, _ := uri.NewURIRef(RDFNS)
 	return &Parser{
-		Triples:          map[string]*Triple{},
+		setTriples:       map[string]*Triple{},
+		Triples:          []*Triple{},
 		writeLock:        sync.RWMutex{},
 		schemaDefinition: map[string]uri.URIRef{"": uri.URIRef{}},
 		blankNodeGetter:  BlankNodeGetter{-1},
