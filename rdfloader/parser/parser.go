@@ -13,7 +13,7 @@ type Parser struct {
 	setTriples       map[string]*Triple
 	Triples          []*Triple
 	writeLock        sync.RWMutex
-	schemaDefinition map[string]uri.URIRef
+	SchemaDefinition map[string]uri.URIRef
 	blankNodeGetter  BlankNodeGetter
 	rdfNS            uri.URIRef
 	wg               sync.WaitGroup
@@ -63,7 +63,7 @@ func New() (parser *Parser) {
 		setTriples:       map[string]*Triple{},
 		Triples:          []*Triple{},
 		writeLock:        sync.RWMutex{},
-		schemaDefinition: map[string]uri.URIRef{"": uri.URIRef{}},
+		SchemaDefinition: map[string]uri.URIRef{"": uri.URIRef{}},
 		blankNodeGetter:  BlankNodeGetter{-1},
 		wg:               sync.WaitGroup{},
 		rdfNS:            rdfNS,
@@ -120,11 +120,12 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, errp *e
 			Predicate: &Node{IRI, predicateURI.String()},
 			Object:    &Node{IRI, openingTagUri.String()},
 		})
-
+		nodeType := LITERAL
 		if len(predicateBlock.Children) == 0 {
 			// no children.
 			var objectString string
 			resIdx, newErr := parser.getRDFAttributeIndex(predicateBlock.OpeningTag, "resource")
+			nodeType = LITERAL
 			*errp = newErr
 			if *errp != nil {
 				return
@@ -132,6 +133,7 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, errp *e
 			if resIdx != -1 {
 				// rdf:resource attribute is present
 				objectString = predicateBlock.OpeningTag.Attrs[resIdx].Value
+				nodeType = RESOURCELITERAL
 			} else {
 				objectString = predicateBlock.Value
 			}
@@ -141,7 +143,7 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, errp *e
 			parser.appendTriple(&Triple{
 				Subject:   node,
 				Predicate: predicateNode,
-				Object:    &Node{LITERAL, objectString},
+				Object:    &Node{nodeType, objectString},
 			})
 		}
 
@@ -174,7 +176,7 @@ func (parser *Parser) Parse(rootBlock xmlreader.Block) (err error) {
 	if err != nil {
 		return err
 	}
-	parser.schemaDefinition = schemaDefinition
+	parser.SchemaDefinition = schemaDefinition
 
 	// root tag is set now.
 	for _, child := range rootBlock.Children {

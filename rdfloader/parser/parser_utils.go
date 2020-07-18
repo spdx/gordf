@@ -34,7 +34,7 @@ func (parser *Parser) uriFromPair(schemaName, name string) (mergedUri uri.URIRef
 	// pairs such as rdf:RDF, where, rdf must be a valid xmlns schema name.
 
 	// base must be a valid schema name defined in the root tag.
-	baseURI, ok := parser.schemaDefinition[schemaName]
+	baseURI, ok := parser.SchemaDefinition[schemaName]
 	if !ok {
 		return uri.URIRef{}, fmt.Errorf("undefined schema name: %v", schemaName)
 	}

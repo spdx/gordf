@@ -6,6 +6,7 @@ type NODETYPE string
 
 const (
 	LITERAL NODETYPE = "LITERAL"
+	RESOURCELITERAL = "RESOURCE"
 	BLANK            = "BNODE"
 	IRI              = "IRI"
 )
