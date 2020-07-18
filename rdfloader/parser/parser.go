@@ -98,6 +98,7 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, errp *e
 			used to report errors in a concurrent environment.
 			why pointer? Because go func() cannot return anything.
 	*/
+	defer parser.wg.Done()
 	for _, predicateBlock := range currBlock.Children {
 
 		// predicateURI can't be a blank node. It has to be a URI Reference
@@ -167,7 +168,6 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, errp *e
 			}
 		}
 	}
-	parser.wg.Done()
 }
 
 func (parser *Parser) Parse(rootBlock xmlreader.Block) (err error) {
@@ -179,8 +179,9 @@ func (parser *Parser) Parse(rootBlock xmlreader.Block) (err error) {
 	parser.SchemaDefinition = schemaDefinition
 
 	// root tag is set now.
+	var childNode *Node
 	for _, child := range rootBlock.Children {
-		childNode, err := parser.nodeFromTag(child.OpeningTag)
+		childNode, err = parser.nodeFromTag(child.OpeningTag)
 		if err != nil {
 			return err
 		}
@@ -192,5 +193,5 @@ func (parser *Parser) Parse(rootBlock xmlreader.Block) (err error) {
 		}
 	}
 	parser.wg.Wait() // wait for all the go routines to finish executing.
-	return nil
+	return err
 }
