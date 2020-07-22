@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -198,6 +199,40 @@ func TestXMLReader_readBlock(t *testing.T) {
 	_, err = xmlReader.readBlock()
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
+	}
+
+	// TestCase 6: invalid case: block with invalid cdata ( cdata without end tag )
+	testString = `
+<spdx:extractedText>
+    <![CDATA[License by Nomos.
+</spdx:extractedText>`
+    xmlReader = xmlreaderFromString(testString)
+    _, err = xmlReader.readBlock()
+    if err == nil {
+    	t.Error("expected an error saying eof reading cdata end tag")
+	}
+
+	// TestCase 7: valid case: block with valid cdata.
+	testString = `
+<spdx:extractedText>
+    <![CDATA[License by Nomos.]]>
+</spdx:extractedText>`
+	xmlReader = xmlreaderFromString(testString)
+	block, err = xmlReader.readBlock()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	expectedBlock := Block{
+		OpeningTag: Tag{
+			SchemaName: "spdx",
+			Name:       "extractedText",
+			Attrs:      nil,
+		},
+		Value:      "<![CDATA[License by Nomos.]]>",
+		Children:   nil,
+	}
+	if !reflect.DeepEqual(block, expectedBlock) {
+		t.Errorf("mismatching output. \nExpected: %+v. \nFound: %+v", expectedBlock, block)
 	}
 }
 
@@ -434,5 +469,57 @@ func TestXMLReader_readOpeningTag(t *testing.T) {
 	}
 	if nAttrs := len(openingTag.Attrs); nAttrs != 1 {
 		t.Errorf("expected only 1 attribute, found %v attributes.", nAttrs)
+	}
+}
+
+func TestXMLReader_readCDATA(t *testing.T) {
+	CDATA_OPENING := "<![CDATA["
+	data := "random data"
+	CDATA_CLOSING := "]]>"
+
+	// TestCase 1: reading in an empty file must raise an error
+	fileContent := ""
+	xmlReader := xmlreaderFromString(fileContent)
+	_, err := xmlReader.readCDATA()
+	if err == nil {
+		t.Errorf("expected an eof reading from an empty file")
+	}
+
+	// TestCase 2: file-pointer doesn't start with a CDATA Tag:
+	// Must raise an error
+	fileContent = "<rdf:RDF> </rdf:RDF>"
+	xmlReader = xmlreaderFromString(fileContent)
+	_, err = xmlReader.readCDATA()
+	if err == nil {
+		t.Errorf("expected an error saying not a valid cdata tag")
+	}
+
+	// TestCase 3: similar to TC2 but the file has a CDATA Tag which is prefixed by blank chars.
+	// Must raise an error. as the function expects blank chars to be stripped before input
+	fileContent = "  " + CDATA_OPENING + data + CDATA_CLOSING
+	xmlReader = xmlreaderFromString(fileContent)
+	_, err = xmlReader.readCDATA()
+	if err == nil {
+		t.Errorf("expected an error saying not a valid cdata tag")
+	}
+
+	// TestCase 4: CDATA tag without closing must raise an error
+	fileContent = CDATA_OPENING + data
+	xmlReader = xmlreaderFromString(fileContent)
+	_, err = xmlReader.readCDATA()
+	if err == nil {
+		t.Errorf("expected an error saying eof reading closing tag")
+	}
+
+	// TestCase 5: Valid CDATA Tag
+	fileContent = CDATA_OPENING + data + CDATA_CLOSING + " some other content.... "
+	xmlReader = xmlreaderFromString(fileContent)
+	output, err := xmlReader.readCDATA()
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+	expectedOutput := CDATA_OPENING + data + CDATA_CLOSING
+	if output != expectedOutput {
+		t.Errorf("expected: %s as the output, found: %s", fileContent, output)
 	}
 }

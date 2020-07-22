@@ -88,6 +88,33 @@ func (xmlReader *XMLReader) readAttribute() (attr Attribute, err error) {
 	return attr, nil
 }
 
+func (xmlReader *XMLReader) readCDATA() (cdata string, err error) {
+	// Cdata tag is given by <![CDATA[ data ]]
+	// before calling this function, < should've be read.
+	// the file pointer should  point to !
+	CDATA_OPENING := "<![CDATA["
+	CDATA_CLOSING := "]]>"
+	nBytes, err := xmlReader.readNBytes(len(CDATA_OPENING))
+	if err != nil {
+		return
+	}
+	tempString := string(nBytes)
+	if tempString != CDATA_OPENING {
+		return cdata, fmt.Errorf("not a valid cdata tag. expected: %s, found: %s", CDATA_OPENING, tempString)
+	}
+
+	// move the file pointer to exclude the cdata declaration tag.
+	data, err := xmlReader.readTillString(CDATA_CLOSING)
+	if err != nil {
+		return cdata, fmt.Errorf("%v reading CDATA End Tag", err)
+	}
+
+	// move file pointer by 3 to ignore the ]]> chars.
+	xmlReader.readNBytes(len(CDATA_CLOSING))
+
+	return CDATA_OPENING + string(data) + CDATA_CLOSING, nil
+}
+
 func (xmlReader *XMLReader) readOpeningTag() (tag Tag, isProlog, blockComplete bool, err error) {
 	// Opening Tag can be:
 	//		<tag[:schema]
@@ -135,10 +162,10 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, isProlog, blockComplete b
 		return
 	}
 
-	if nextRune == '/' {
+	switch nextRune {
+	case '/':
 		return tag, isProlog, blockComplete, errors.New("unexpected closing tag")
-	}
-	if nextRune == '?' {
+	case '?':
 		// a prolog is found.
 		isProlog = true
 		// ignore the question mark character.
@@ -166,6 +193,7 @@ func (xmlReader *XMLReader) readOpeningTag() (tag Tag, isProlog, blockComplete b
 			return tag, isProlog, blockComplete, err
 		}
 		err = fmt.Errorf("expected a > char after ?. Found %v", nextRune)
+		return tag, isProlog, blockComplete, err
 	}
 
 	// reading the next word till we reach a colon or a blank-char or a closing angular bracket.
@@ -334,30 +362,39 @@ func (xmlReader *XMLReader) readBlock() (block Block, err error) {
 		}
 		block.Value = string(word)
 	} else {
-		// expecting a new tag or closing tag of the currently read tag.
+		// expecting a new tag or closing tag of the currently read tag or CDATA.
 		nextTwoBytes, err := xmlReader.peekNBytes(2)
 		if err != nil {
 			return block, err
 		}
 
-		// while we don't get a closing tag, read the children.
-		for string(nextTwoBytes) != "</" {
-			// a new tag is found.
-			childBlock, err := xmlReader.readBlock()
+		if string(nextTwoBytes) == "<!" {
+			// cdata tag is found
+			cdataTag, err := xmlReader.readCDATA()
 			if err != nil {
 				return block, err
 			}
+			block.Value = cdataTag
+		} else {
+			// while we don't get a closing tag, read the children.
+			for string(nextTwoBytes) != "</" {
+				// a new tag is found.
+				childBlock, err := xmlReader.readBlock()
+				if err != nil {
+					return block, err
+				}
 
-			block.Children = append(block.Children, &childBlock)
+				block.Children = append(block.Children, &childBlock)
 
-			xmlReader.ignoreWhiteSpace()
-			nextTwoBytes, err = xmlReader.peekNBytes(2)
-			if err != nil {
-				return block, err
+				xmlReader.ignoreWhiteSpace()
+				nextTwoBytes, err = xmlReader.peekNBytes(2)
+				if err != nil {
+					return block, err
+				}
 			}
 		}
 	}
-
+	xmlReader.ignoreWhiteSpace()  // if any
 	closingTag, err := xmlReader.readClosingTag()
 	if err != nil {
 		return block, err

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"strings"
 	"testing"
 )
 
@@ -143,5 +144,49 @@ func TestXMLReader_readTill(t *testing.T) {
 	}
 	if r != ' ' {
 		t.Errorf("Expected %v, Found %v", ' ', r)
+	}
+}
+
+func TestXMLReader_readTillString(t *testing.T) {
+	// TestCase 1: searching in an empty file must raise an eof error
+	xmlReader := xmlreaderFromString("")
+	_, err := xmlReader.readTillString("any string")
+	if err == nil {
+		t.Error("expected an eof error")
+	}
+
+	// TestCase 2: searching in a file with delimiter at the end.
+	// it shouldn't raise any error.
+	delimiter := "example"
+	fileContent := delimiter
+	xmlReader = xmlreaderFromString(fileContent)
+	output, err := xmlReader.readTillString(delimiter)
+	if err != nil {
+		t.Errorf("unexpected error %v", err)
+	}
+	if len(output) > 0 {
+		t.Error("expected output to be empty as the file didn't had any chars before the delimiter")
+	}
+
+	// TestCase 3: delimiter not in the file must return an empty output with an eof error.
+	fileContent = "sample content"
+	delimiter = "delim"
+	xmlReader = xmlreaderFromString(fileContent)
+	output, err = xmlReader.readTillString(delimiter)
+	if err == nil {
+		t.Error("expected an eof error finding delimiter")
+	}
+	if len(output) > 0 {
+		t.Errorf("output should be empty when the delimiter is not found which ran into an error. found %v", output)
+	}
+
+	// TestCase 4: Valid case: delimiter present in the string.
+	delimiter = "delimiter"
+	fileContent = "some random chars" + delimiter
+	xmlReader = xmlreaderFromString(fileContent)
+	output, _ = xmlReader.readTillString(delimiter)
+	expected := strings.Split(fileContent, delimiter)[0]
+	if string(output) != expected {
+		t.Errorf("faulty parsing. expected: %s, found: %s", expected, string(output))
 	}
 }

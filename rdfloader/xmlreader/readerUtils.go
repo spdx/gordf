@@ -95,16 +95,48 @@ func (xmlReader *XMLReader) readTill(delim uint64) ([]rune, error) {
 	}
 }
 
+func (xmlReader *XMLReader) readTillString(delimiter string) ([]byte, error) {
+	// reads the input file rune by rune till the target rune is found
+	//		or eof is reached.
+	// Note: it doesn't include the target rune in the read word.
+	var buffer []byte
+	for {
+		b, err := xmlReader.peekNBytes(len(delimiter))
+		if err != nil {
+			// flush the output when any error occurs
+			return []byte{}, err
+		}
+		// checking if the read rune is same as any of the delimiters' mask
+		if string(b) == delimiter {
+			return buffer, nil
+		}
+
+		// moving file pointer n characters ahead.
+		xmlReader.readARune()
+
+		// current string doesn't match the given delimiter.
+		buffer = append(buffer, b[0])
+	}
+}
+
 // read N bytes from the file without affecting the file pointer.
 func (xmlReader *XMLReader) peekNBytes(n int) ([]byte, error) {
 	return xmlReader.fileReader.Peek(n)
 }
 
 // read N bytes from the file advancing the file pointer by N.
-func (xmlReader *XMLReader) readNBytes(n int) (nextNBytes []byte, err error) {
-	nextNBytes = make([]byte, n)
-	_, err = xmlReader.fileReader.Read(nextNBytes)
-	return nextNBytes, err
+func (xmlReader *XMLReader) readNBytes(n int) ([]byte, error) {
+	var output []byte
+	for n > 0 {
+		buffer := make([]byte, n)
+		nBytesRead, err := xmlReader.fileReader.Read(buffer)
+		if err != nil {
+			return output, err
+		}
+		n -= nBytesRead
+		output = append(output, buffer[:nBytesRead]...)
+	}
+	return output, nil
 }
 
 // advance the file pointer until a non-blank character is found.
