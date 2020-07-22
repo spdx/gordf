@@ -171,3 +171,105 @@ func TestParser_Parse(t *testing.T) {
 		}
 	}()
 }
+
+func Test_parseHeaderBlock(t *testing.T) {
+	// parseHeaderBlock returns all the schema definitions in the input rootBlock.
+
+	// TestCase 1: empty root block without any children or attributes.
+	// should return a map with only rdf namespace declaration
+	rootBlock := xmlreader.Block{
+		OpeningTag: xmlreader.Tag{
+			SchemaName: "",
+			Name:       "",
+			Attrs:      nil,
+		},
+		Value:      "",
+		Children:   nil,
+	}
+	schemaDefinition, err := parseHeaderBlock(rootBlock)
+	if err != nil {
+		t.Errorf("unexpected error : %v", err)
+		return
+	}
+	if n := len(schemaDefinition); n != 1 {
+		t.Errorf("expected schemaDefinition to have exactly one default namespace declaration of rdf. found %d declarations", n)
+	}
+	// check if the "rdf" uri is correct
+	ref := schemaDefinition["rdf"]
+	if ref.String() != RDFNS {
+		t.Errorf("default schema uri for rdf should be %s, found %s", RDFNS, ref.String())
+	}
+
+	// TestCase 2: root block with invalid schema name attribute and no children
+	rootBlock = xmlreader.Block{
+		OpeningTag: xmlreader.Tag{
+			SchemaName: "",
+			Name:       "",
+			Attrs:      []xmlreader.Attribute{
+				{
+					Name:       "rdf",
+					SchemaName: "xmlns",
+					Value:      "invalid uri",
+				},
+			},
+		},
+		Value:      "",
+		Children:   nil,
+	}
+	_, err = parseHeaderBlock(rootBlock)
+	if err == nil {
+		t.Error("should've raised an error saying invalid uri received")
+	}
+
+	// TestCase 3: redefined "rdf" attribute must not be over-written by the default namespace.
+	newRDFNS := "https://www.sample.com/rdf#"
+	rootBlock = xmlreader.Block{
+		OpeningTag: xmlreader.Tag{
+			SchemaName: "",
+			Name:       "",
+			Attrs:      []xmlreader.Attribute{
+				{
+					Name:       "rdf",
+					SchemaName: "xmlns",
+					Value:      newRDFNS,
+				},
+			},
+		},
+		Value:      "",
+		Children:   nil,
+	}
+	schemaDefinition, err = parseHeaderBlock(rootBlock)
+	uriRef := schemaDefinition["rdf"]
+	if uriRef.String() != newRDFNS {
+		t.Errorf("expected uri: %s, found %s", newRDFNS, uriRef.String())
+	}
+
+	// TestCase 3: Valid Case: exactly one namespace declaration which is not rdf.
+	doapNS := `http://usefulinc.com/ns/doap#`
+	rootBlock = xmlreader.Block{
+		OpeningTag: xmlreader.Tag{
+			SchemaName: "",
+			Name:       "",
+			Attrs:      []xmlreader.Attribute{
+				{
+					Name:       "doap",
+					SchemaName: "xmlns",
+					Value:      doapNS,
+				},
+			},
+		},
+		Value:      "",
+		Children:   nil,
+	}
+	schemaDefinition, err = parseHeaderBlock(rootBlock)
+	if len(schemaDefinition) != 2 {
+		t.Errorf("after parsing rootblock with one namespace " +
+			"declaration(not xmlns:rdf), the schema-definition " +
+			"should've two elements")
+	}
+	rdfURI := schemaDefinition["rdf"]
+	doapURI := schemaDefinition["doap"]
+	if rdfURI.String() != RDFNS || doapURI.String() != doapNS {
+		t.Errorf("invalid schema definition: %v", schemaDefinition)
+	}
+}

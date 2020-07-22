@@ -4,6 +4,7 @@ import (
 	"fmt"
 	xmlreader "github.com/RishabhBhatnagar/gordf/rdfloader/xmlreader"
 	"github.com/RishabhBhatnagar/gordf/uri"
+	"strings"
 	"sync"
 )
 
@@ -25,14 +26,27 @@ func parseHeaderBlock(rootBlock xmlreader.Block) (map[string]uri.URIRef, error) 
 
 	namespaceURI := map[string]uri.URIRef{}
 
+	// boolean to indicate if we got any uri same as parser.RDFNS
+	anyRDFURI := false
+
 	for _, attr := range rootBlock.OpeningTag.Attrs {
 		if attr.SchemaName == "xmlns" {
 			uriref, err := uri.NewURIRef(attr.Value)
 			if err != nil {
 				return namespaceURI, fmt.Errorf("schema URI %v doesn't confirm to URL rules", rootBlock)
 			}
+			if strings.TrimSuffix(uriref.String(), "#") == strings.TrimSuffix(RDFNS, "#") {
+				anyRDFURI = true
+			}
 			namespaceURI[attr.Name] = uriref
 		}
+	}
+
+	// rdfAbbrevPresent: true if user has mapped "rdf" to another uri
+	_, rdfAbbrevPresent := namespaceURI["rdf"]
+	if !anyRDFURI && !rdfAbbrevPresent {
+		rdfURI, _ := uri.NewURIRef(RDFNS)
+		namespaceURI["rdf"] = rdfURI
 	}
 	return namespaceURI, nil
 }
