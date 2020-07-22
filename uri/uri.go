@@ -3,7 +3,6 @@
 package uri
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -40,10 +39,6 @@ func NewURIRef(uri string) (uriref URIRef, err error) {
 		return uriref, fmt.Errorf("Malformed URI: %v", err)
 	}
 
-	if len(uri) == 0 {
-		return uriref, errors.New("empty Input URI")
-	}
-
 	// adding a # to the end if it doesn't end in # already.
 	if !strings.HasSuffix(uri, "#") {
 		uri += "#"
@@ -55,14 +50,14 @@ func NewURIRef(uri string) (uriref URIRef, err error) {
 
 // join the fragment to the uri of current object
 func (uriref *URIRef) AddFragment(frag string) (retURI URIRef) {
-	// validating the relative uri
-	_, err := url.Parse(frag)
-	if err != nil {
-		return
-	}
-
 	if strings.HasPrefix(frag, "#") {
 		frag = frag[1:]
+	}
+
+	// validating the relative uri
+	_, err := url.ParseRequestURI(uriref.uri + frag)
+	if err != nil {
+		return
 	}
 
 	// relative uri is fine, return a new object of uriref.

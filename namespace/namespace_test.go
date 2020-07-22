@@ -5,10 +5,18 @@ import (
 )
 
 func TestNew(t *testing.T) {
+	// TestCase 1: Valid URI
 	sampleURI := "https://www.spdx.org/rdf/terms"
 	_, err := New(sampleURI)
 	if err != nil {
 		t.Errorf("error parsing a valid URI")
+	}
+
+	// TestCase 2: Invalid URI must raise an error
+	invalidURI := "invalid uri"
+	_, err = New(invalidURI)
+	if err == nil {
+		t.Errorf("expected an error stating invalid URI")
 	}
 }
 

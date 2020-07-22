@@ -5,7 +5,7 @@ import (
 )
 
 func TestNewURIRef(t *testing.T) {
-	// case when the input is an empty string
+	// TestCase 1: input is an empty string
 	_, err := NewURIRef("")
 	if err == nil {
 		t.Errorf("blank uri should've raised an error")
@@ -42,13 +42,27 @@ func TestURIRef_AddFragment(t *testing.T) {
 	uriString := "https://www.someuri.com/valid/uri"
 	uriref, _ := NewURIRef(uriString)
 
-	// nothing much to test
-	fragment := "someFrag"
+	// TestCase 1: Invalid Fragment must return an empty uri
+	fragment := "%%%%"
 	newUri := uriref.AddFragment(fragment)
-	if exp := uriString + "#" + fragment; newUri.String() != exp {
-		t.Errorf("expected: %v, found: %v", exp, newUri)
+	if newUri.String() != "" {
+		t.Errorf("invalid fragment must result in an empty uri. Found %v", newUri.String())
 	}
 
+	// TestCase 2: valid fragment
+	fragment = "someFrag"
+	newUri = uriref.AddFragment(fragment)
+	expectedURI := uriString + "#" + fragment
+	if newUri.String() != expectedURI {
+		t.Errorf("expected: %v, found: %v", expectedURI, newUri)
+	}
+
+	// TestCase 3: valid fragmnet starting with a hash char.
+	fragment = "#" + fragment
+	newUri = uriref.AddFragment(fragment)
+	if newUri.String() != expectedURI {
+		t.Errorf("expected %v, found %v", expectedURI, newUri)
+	}
 }
 
 func TestURIRef_String(t *testing.T) {
