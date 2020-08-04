@@ -38,7 +38,7 @@ func getNBlankNodes(n int) (blankNodes []*parser.Node) {
 func Test_getAdjacencyList(t *testing.T) {
 	// TestCase 1
 	// empty list of triples should have empty map as an output
-	adjList, recoveryDS := getAdjacencyList([]*parser.Triple{})
+	adjList, recoveryDS := GetAdjacencyList([]*parser.Triple{})
 	if len(adjList) > 0 || len(recoveryDS) > 0 {
 		t.Errorf("empty input is having non-empty output. Adjacency List: %v, recoveryDS: %v", adjList, recoveryDS)
 	}
@@ -68,7 +68,7 @@ func Test_getAdjacencyList(t *testing.T) {
 			Object:    blankNodes[4],
 		},
 	}
-	adjList, _ = getAdjacencyList(triples)
+	adjList, _ = GetAdjacencyList(triples)
 	// adjList must have exactly 3 keys (N0, N2, N4)
 	if len(adjList) != 3 {
 		t.Errorf("adjacency list for the given graph should've only one key. Found %v keys", len(adjList))
@@ -213,7 +213,7 @@ func Test_topologicalSortHelper(t *testing.T) {
 		{Subject: nodes[0], Predicate: nodes[3], Object: nodes[4]},
 		{Subject: nodes[3], Predicate: nodes[5], Object: nodes[7]},
 	}
-	adjList, _ = getAdjacencyList(triples)
+	adjList, _ = GetAdjacencyList(triples)
 
 	// TestCase 1: trying to traverse on a node which doesn't exist in the graph.
 	// function should raise an error.
@@ -442,7 +442,7 @@ func Test_getRootNodes(t *testing.T) {
 	triples := []*parser.Triple{
 		{Subject: nodes[0], Predicate: nodes[1], Object: nodes[0]},
 	}
-	roots := getRootNodes(triples)
+	roots := GetRootNodes(triples)
 	if len(roots) != 0 {
 		t.Errorf("expected no roots as output. found %v", roots)
 	}
@@ -465,7 +465,7 @@ func Test_getRootNodes(t *testing.T) {
 		{Subject: nodes[3], Predicate: nodes[4], Object: nodes[5]},
 		{Subject: nodes[6], Predicate: nodes[7], Object: nodes[8]},
 	}
-	roots = getRootNodes(triples)
+	roots = GetRootNodes(triples)
 	if len(roots) != len(triples) {
 		t.Errorf("expected %v root nodes, found %v nodes", len(roots), len(triples))
 	}

@@ -13,7 +13,7 @@ import (
 // Output:
 //    adjList: adjacency list which maps subject to object for each triple
 //    recoveryDS: subject to triple mapping that will help retrieve the triples after sorting the Subject: Object pairs.
-func getAdjacencyList(triples []*parser.Triple) (adjList map[*parser.Node][]*parser.Node, recoveryDS map[*parser.Node][]*parser.Triple) {
+func GetAdjacencyList(triples []*parser.Triple) (adjList map[*parser.Node][]*parser.Node, recoveryDS map[*parser.Node][]*parser.Triple) {
 	// triples are analogous to the edges of a graph.
 	// For a (Subject, Predicate, Object) triple,
 	// it forms a directed edge from Subject to Object
@@ -122,7 +122,7 @@ func topologicalSort(adjList map[*parser.Node][]*parser.Node) ([]*parser.Node, e
 // Interface for user to provide a list of triples and get the
 // sorted one as the output
 func TopologicalSortTriples(triples []*parser.Triple) (sortedTriples []*parser.Triple, err error) {
-	adjList, recoveryDS := getAdjacencyList(triples)
+	adjList, recoveryDS := GetAdjacencyList(triples)
 	sortedNodes, err := topologicalSort(adjList)
 	if err != nil {
 		return sortedTriples, fmt.Errorf("error sorting the triples: %v", err)
@@ -221,7 +221,7 @@ func shortenURI(uri string, invSchemaDefinition map[string]string) (string, erro
 
 // from a given adjacency list, return a list of root-nodes which will be used
 // to generate string forms of the nodes to be written.
-func getRootNodes(triples []*parser.Triple) (rootNodes []*parser.Node) {
+func GetRootNodes(triples []*parser.Triple) (rootNodes []*parser.Node) {
 
 	// In a disjoint set, indices with root nodes will point to nil
 	// that means, if disjointSet[node] is nil, the node has no parent
