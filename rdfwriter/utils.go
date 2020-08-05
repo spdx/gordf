@@ -214,6 +214,9 @@ func shortenURI(uri string, invSchemaDefinition map[string]string) (string, erro
 		return "", fmt.Errorf(`fragment "%v" doesn't exist`, fragment)
 	}
 	if abbrev, exists := invSchemaDefinition[baseURI]; exists {
+		if abbrev == "" {
+			return fragment, nil
+		}
 		return fmt.Sprintf("%s:%s", abbrev, fragment), nil
 	}
 	return "", fmt.Errorf("declaration of URI(%s) not found in the schemaDefinition", baseURI)
