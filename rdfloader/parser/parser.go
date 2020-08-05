@@ -39,6 +39,12 @@ func parseHeaderBlock(rootBlock xmlreader.Block) (map[string]uri.URIRef, error) 
 				anyRDFURI = true
 			}
 			namespaceURI[attr.Name] = uriref
+		} else if attr.SchemaName == "" && attr.Name == "xmlns" {
+			uriref, err := uri.NewURIRef(attr.Value)
+			if err != nil {
+				return namespaceURI, err
+			}
+			namespaceURI[attr.SchemaName] = uriref
 		}
 	}
 

@@ -28,7 +28,11 @@ func getRootTagFromSchemaDefinition(schemaDefinition map[string]uri.URIRef, tab 
 	rootTag := "<rdf:RDF\n"
 	for tag := range schemaDefinition {
 		tagURI := schemaDefinition[tag]
-		rootTag += tab + fmt.Sprintf(`%s:%s="%s"`, "xmlns", tag, tagURI.String()) + "\n"
+		if tag == "" {
+			rootTag += tab + fmt.Sprintf(`%s="%s"`, "xmlns", tagURI.String()) + "\n"
+		} else {
+			rootTag += tab + fmt.Sprintf(`%s:%s="%s"`, "xmlns", tag, tagURI.String()) + "\n"
+		}
 	}
 	rootTag = rootTag[:len(rootTag)-1] // removing the last \n char.
 	rootTag += ">"
