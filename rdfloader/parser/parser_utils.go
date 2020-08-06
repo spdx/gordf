@@ -4,6 +4,7 @@ import (
 	"fmt"
 	xmlreader "github.com/RishabhBhatnagar/gordf/rdfloader/xmlreader"
 	"github.com/RishabhBhatnagar/gordf/uri"
+	"strings"
 )
 
 type Triple struct {
@@ -43,7 +44,7 @@ func (parser *Parser) uriFromPair(schemaName, name string) (mergedUri uri.URIRef
 	return baseURI.AddFragment(name), nil
 }
 
-func (parser *Parser) nodeFromTag(openingTag xmlreader.Tag) (node *Node, err error) {
+func (parser *Parser) nodeFromTag(openingTag xmlreader.Tag, lastURI string) (node *Node, err error) {
 	// returns the node object from the opening tag of any block.
 	// https://www.w3.org/TR/rdf-syntax-grammar/figure1.png has sample image having 5 nodes.
 	// 		one of them is a blank node.
@@ -60,24 +61,31 @@ func (parser *Parser) nodeFromTag(openingTag xmlreader.Tag) (node *Node, err err
 	}
 
 	var currentNode Node
-	if index == -1 {
-		// we didnt' find rdf:about in the attributes of the opening tag.
-		// returning a new blank node.
-		rdfNodeIDIndex, err := parser.getRDFAttributeIndex(openingTag, "nodeID")
-		if err != nil {
-			return nil, err
-		}
-		if rdfNodeIDIndex == -1 {
-			currentNode = parser.blankNodeGetter.Get()
-		} else {
-			currentNode = parser.blankNodeGetter.GetFromId(openingTag.Attrs[rdfNodeIDIndex].Value)
-		}
-	} else {
+	if index != -1 {
 		// we found a rdf:about tag.
-		currentNode = Node{
-			NodeType: IRI,
-			ID:       openingTag.Attrs[index].Value,
+		currentNode.NodeType = IRI
+		currentNode.ID = openingTag.Attrs[index].Value
+		if strings.HasPrefix(currentNode.ID, "#") {
+			// the predicate uri is a relative uri. it must be resolve using the base lastURI
+			baseURI, err := uri.NewURIRef(lastURI)
+			if err != nil {
+				return nil, err
+			}
+			resolvedURI := baseURI.AddFragment(currentNode.ID)
+			currentNode.ID = resolvedURI.String()
 		}
+		return &currentNode, nil
+	}
+
+	// we don't have rdf:about attribute, returning a new blank node.
+	rdfNodeIDIndex, err := parser.getRDFAttributeIndex(openingTag, "nodeID")
+	if err != nil {
+		return nil, err
+	}
+	if rdfNodeIDIndex == -1 {
+		currentNode = parser.blankNodeGetter.Get()
+	} else {
+		currentNode = parser.blankNodeGetter.GetFromId(openingTag.Attrs[rdfNodeIDIndex].Value)
 	}
 	return &currentNode, nil
 }

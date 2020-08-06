@@ -76,6 +76,15 @@ func (parser *Parser) getRDFAttributeIndex(tag xmlreader.Tag, attrName string) (
 	return
 }
 
+func getLastURI(tag xmlreader.Tag, lastURI string) string {
+	for _, attr := range tag.Attrs {
+		if attr.SchemaName == "" && attr.Name == "xmlns" {
+			return attr.Value
+		}
+	}
+	return lastURI
+}
+
 func New() (parser *Parser) {
 	// creates a new parser object
 	rdfNS, _ := uri.NewURIRef(RDFNS)
@@ -90,7 +99,7 @@ func New() (parser *Parser) {
 	}
 }
 
-func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, errp *error) {
+func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, lastURI string, errp *error) {
 	/*
 		1. What is a block?
 		Ans: A rdf block is made up of
@@ -119,8 +128,8 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, errp *e
 			why pointer? Because go func() cannot return anything.
 	*/
 	defer parser.wg.Done()
+	lastURI = getLastURI(currBlock.OpeningTag, lastURI)
 	for _, predicateBlock := range currBlock.Children {
-
 		// predicateURI can't be a blank node. It has to be a URI Reference
 		//     according to https://www.w3.org/TR/rdf-concepts/#dfn-predicate
 		predicateURI, newErr := parser.uriFromPair(predicateBlock.OpeningTag.SchemaName, predicateBlock.OpeningTag.Name)
@@ -170,7 +179,7 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, errp *e
 
 		// the predicate block has children
 		for _, objectBlock := range predicateBlock.Children {
-			objectNode, newErr := parser.nodeFromTag(objectBlock.OpeningTag)
+			objectNode, newErr := parser.nodeFromTag(objectBlock.OpeningTag, lastURI)
 			if newErr != nil {
 				*errp = newErr
 				return
@@ -182,7 +191,7 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, errp *e
 				Object:    objectNode,
 			})
 			parser.wg.Add(1)
-			go parser.parseBlock(objectBlock, objectNode, errp)
+			go parser.parseBlock(objectBlock, objectNode, lastURI, errp)
 			if *errp != nil {
 				return
 			}
@@ -200,14 +209,16 @@ func (parser *Parser) Parse(rootBlock xmlreader.Block) (err error) {
 
 	// root tag is set now.
 	var childNode *Node
+	xmlns := schemaDefinition[""]
+	xmlnsString := xmlns.String()
 	for _, child := range rootBlock.Children {
-		childNode, err = parser.nodeFromTag(child.OpeningTag)
+		childNode, err = parser.nodeFromTag(child.OpeningTag, xmlnsString)
 		if err != nil {
 			return err
 		}
 
 		parser.wg.Add(1)
-		go parser.parseBlock(child, childNode, &err)
+		go parser.parseBlock(child, childNode, xmlnsString, &err)
 		if err != nil {
 			return err
 		}
