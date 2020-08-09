@@ -150,31 +150,49 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, lastURI
 			Predicate: &Node{IRI, predicateURI.String()},
 			Object:    &Node{IRI, openingTagUri.String()},
 		})
-		nodeType := LITERAL
 		if len(predicateBlock.Children) == 0 {
 			// no children.
-			var objectString string
+			currentTriple := &Triple{
+				Subject:   node,
+				Predicate: predicateNode,
+				Object:    nil,
+			}
 			resIdx, newErr := parser.getRDFAttributeIndex(predicateBlock.OpeningTag, "resource")
-			nodeType = LITERAL
 			*errp = newErr
 			if *errp != nil {
 				return
 			}
-			if resIdx != -1 {
+			nodeidIdx, newErr := parser.getRDFAttributeIndex(predicateBlock.OpeningTag, "nodeID")
+			*errp = newErr
+			if *errp != nil {
+				return
+			}
+
+			switch {
+			case resIdx != -1:
 				// rdf:resource attribute is present
-				objectString = predicateBlock.OpeningTag.Attrs[resIdx].Value
-				nodeType = RESOURCELITERAL
-			} else {
-				objectString = predicateBlock.Value
+				currentTriple.Object = &Node{
+					NodeType: RESOURCELITERAL,
+					ID:       predicateBlock.OpeningTag.Attrs[resIdx].Value,
+				}
+			case nodeidIdx != -1:
+				// we have a reference to another block via rdf:nodeID
+				currentTriple.Object = &Node{
+					NodeType: NODEIDLITERAL,
+					ID:       parser.blankNodeGetter.GetFromId(predicateBlock.OpeningTag.Attrs[nodeidIdx].Value).ID,
+				}
+			default:
+				// it is a literal node without any special attributes
+				resIdx, newErr = parser.getRDFAttributeIndex(predicateBlock.OpeningTag, "nodeID")
+				currentTriple.Object = &Node{
+					NodeType: LITERAL,
+					ID:       predicateBlock.Value,
+				}
 			}
 
 			// registering a new Triple:
 			// (currentNode) -> rdf:type -> (openingTagURI)
-			parser.appendTriple(&Triple{
-				Subject:   node,
-				Predicate: predicateNode,
-				Object:    &Node{nodeType, objectString},
-			})
+			parser.appendTriple(currentTriple)
 		}
 
 		// the predicate block has children

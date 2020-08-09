@@ -183,8 +183,8 @@ func Test_parseHeaderBlock(t *testing.T) {
 			Name:       "",
 			Attrs:      nil,
 		},
-		Value:      "",
-		Children:   nil,
+		Value:    "",
+		Children: nil,
 	}
 	schemaDefinition, err := parseHeaderBlock(rootBlock)
 	if err != nil {
@@ -205,7 +205,7 @@ func Test_parseHeaderBlock(t *testing.T) {
 		OpeningTag: xmlreader.Tag{
 			SchemaName: "",
 			Name:       "",
-			Attrs:      []xmlreader.Attribute{
+			Attrs: []xmlreader.Attribute{
 				{
 					Name:       "rdf",
 					SchemaName: "xmlns",
@@ -213,8 +213,8 @@ func Test_parseHeaderBlock(t *testing.T) {
 				},
 			},
 		},
-		Value:      "",
-		Children:   nil,
+		Value:    "",
+		Children: nil,
 	}
 	_, err = parseHeaderBlock(rootBlock)
 	if err == nil {
@@ -227,7 +227,7 @@ func Test_parseHeaderBlock(t *testing.T) {
 		OpeningTag: xmlreader.Tag{
 			SchemaName: "",
 			Name:       "",
-			Attrs:      []xmlreader.Attribute{
+			Attrs: []xmlreader.Attribute{
 				{
 					Name:       "rdf",
 					SchemaName: "xmlns",
@@ -235,8 +235,8 @@ func Test_parseHeaderBlock(t *testing.T) {
 				},
 			},
 		},
-		Value:      "",
-		Children:   nil,
+		Value:    "",
+		Children: nil,
 	}
 	schemaDefinition, err = parseHeaderBlock(rootBlock)
 	uriRef := schemaDefinition["rdf"]
@@ -250,7 +250,7 @@ func Test_parseHeaderBlock(t *testing.T) {
 		OpeningTag: xmlreader.Tag{
 			SchemaName: "",
 			Name:       "",
-			Attrs:      []xmlreader.Attribute{
+			Attrs: []xmlreader.Attribute{
 				{
 					Name:       "doap",
 					SchemaName: "xmlns",
@@ -258,8 +258,8 @@ func Test_parseHeaderBlock(t *testing.T) {
 				},
 			},
 		},
-		Value:      "",
-		Children:   nil,
+		Value:    "",
+		Children: nil,
 	}
 	schemaDefinition, err = parseHeaderBlock(rootBlock)
 	if len(schemaDefinition) != 2 {

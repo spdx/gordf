@@ -5,10 +5,11 @@ import "fmt"
 type NODETYPE string
 
 const (
-	LITERAL NODETYPE = "LITERAL"
-	RESOURCELITERAL = "RESOURCE"
-	BLANK            = "BNODE"
-	IRI              = "IRI"
+	LITERAL         NODETYPE = "LITERAL"
+	RESOURCELITERAL          = "RESOURCE"
+	NODEIDLITERAL            = "NodeIDLiteral"
+	BLANK                    = "BNODE"
+	IRI                      = "IRI"
 )
 
 type Node struct {
