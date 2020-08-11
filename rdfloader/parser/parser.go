@@ -129,6 +129,21 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, lastURI
 	*/
 	defer parser.wg.Done()
 	lastURI = getLastURI(currBlock.OpeningTag, lastURI)
+	if len(currBlock.Children) == 0 {
+		// adding only one triple which identifies the type of the current block.
+		predicateURI := parser.rdfNS.AddFragment("type")
+		openingTagUri, newErr := parser.uriFromPair(currBlock.OpeningTag.SchemaName, currBlock.OpeningTag.Name)
+		if newErr != nil {
+			*errp = newErr
+			return
+		}
+		parser.appendTriple(&Triple{
+			Subject:   node,
+			Predicate: &Node{IRI, predicateURI.String()},
+			Object:    &Node{IRI, openingTagUri.String()},
+		})
+		return
+	}
 	for _, predicateBlock := range currBlock.Children {
 		// predicateURI can't be a blank node. It has to be a URI Reference
 		//     according to https://www.w3.org/TR/rdf-concepts/#dfn-predicate
@@ -144,6 +159,8 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, lastURI
 			*errp = newErr
 			return
 		}
+
+		// (node) -> rdf:type -> (openingTagURI)
 		predicateURI = parser.rdfNS.AddFragment("type")
 		parser.appendTriple(&Triple{
 			Subject:   node,
@@ -191,7 +208,6 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, lastURI
 			}
 
 			// registering a new Triple:
-			// (currentNode) -> rdf:type -> (openingTagURI)
 			parser.appendTriple(currentTriple)
 		}
 
@@ -234,7 +250,6 @@ func (parser *Parser) Parse(rootBlock xmlreader.Block) (err error) {
 		if err != nil {
 			return err
 		}
-
 		parser.wg.Add(1)
 		go parser.parseBlock(child, childNode, xmlnsString, &err)
 		if err != nil {
