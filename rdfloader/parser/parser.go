@@ -35,7 +35,7 @@ func parseHeaderBlock(rootBlock xmlreader.Block) (map[string]uri.URIRef, error) 
 		if attr.SchemaName == "xmlns" {
 			uriref, err := uri.NewURIRef(attr.Value)
 			if err != nil {
-				return namespaceURI, fmt.Errorf("schema URI %v doesn't confirm to URL rules", rootBlock)
+				return namespaceURI, fmt.Errorf("schema URI %v doesn't confirm to URL rules", attr.Value)
 			}
 			if strings.TrimSuffix(uriref.String(), "#") == strings.TrimSuffix(RDFNS, "#") {
 				anyRDFURI = true
