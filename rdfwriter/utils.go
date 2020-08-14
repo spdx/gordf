@@ -13,7 +13,7 @@ import (
 // Output:
 //    adjList: adjacency list which maps subject to object for each triple
 //    recoveryDS: subject to triple mapping that will help retrieve the triples after sorting the Subject: Object pairs.
-func GetAdjacencyList(triples []*parser.Triple) (adjList map[*parser.Node][]*parser.Node, recoveryDS map[*parser.Node][]*parser.Triple) {
+func GetAdjacencyList(triples []*parser.Triple) (adjList map[*parser.Node][]*parser.Node, recoveryDS map[string][]*parser.Triple) {
 	// triples are analogous to the edges of a graph.
 	// For a (Subject, Predicate, Object) triple,
 	// it forms a directed edge from Subject to Object
@@ -23,22 +23,22 @@ func GetAdjacencyList(triples []*parser.Triple) (adjList map[*parser.Node][]*par
 
 	// initialising the adjacency list:
 	adjList = make(map[*parser.Node][]*parser.Node)
-	recoveryDS = make(map[*parser.Node][]*parser.Triple)
+	recoveryDS = make(map[string][]*parser.Triple)
 	for _, triple := range triples {
 		// create a new entry in the adjList if the key is not already seen.
 		if adjList[triple.Subject] == nil {
 			adjList[triple.Subject] = []*parser.Node{}
-			recoveryDS[triple.Subject] = []*parser.Triple{}
+			recoveryDS[triple.Subject.String()] = []*parser.Triple{}
 		}
 
 		// the key is already seen and we can directly append the child
 		adjList[triple.Subject] = append(adjList[triple.Subject], triple.Object)
-		recoveryDS[triple.Subject] = append(recoveryDS[triple.Subject], triple)
+		recoveryDS[triple.Subject.String()] = append(recoveryDS[triple.Subject.String()], triple)
 
 		// ensure that there is a key entry for all the children.
 		if adjList[triple.Object] == nil {
 			adjList[triple.Object] = []*parser.Node{}
-			recoveryDS[triple.Object] = []*parser.Triple{}
+			recoveryDS[triple.Object.String()] = []*parser.Triple{}
 		}
 	}
 	return adjList, recoveryDS
@@ -134,7 +134,7 @@ func TopologicalSortTriples(triples []*parser.Triple) (sortedTriples []*parser.T
 	i := 0
 	for _, subjectNode := range sortedNodes {
 		// append all the triples associated with the subjectNode
-		for _, triple := range recoveryDS[subjectNode] {
+		for _, triple := range recoveryDS[subjectNode.String()] {
 			if i > len(triples) {
 				// redundant check. there is no way user might reach here.
 				return sortedTriples, fmt.Errorf("overflow error. more triples than expected found after sorting")
@@ -147,12 +147,21 @@ func TopologicalSortTriples(triples []*parser.Triple) (sortedTriples []*parser.T
 }
 
 func DisjointSet(triples []*parser.Triple) map[*parser.Node]*parser.Node {
-	parent := make(map[*parser.Node]*parser.Node)
+	nodeStringMap := map[string]*parser.Node{}
+	parentString := map[string]*parser.Node{}
 	for _, triple := range triples {
-		parent[triple.Object] = triple.Subject
-		if _, exists := parent[triple.Subject]; !exists {
-			parent[triple.Subject] = nil
+		parentString[triple.Object.String()] = triple.Subject
+		nodeStringMap[triple.Object.String()] = triple.Object
+		if _, exists := parentString[triple.Subject.String()]; !exists {
+			parentString[triple.Subject.String()] = nil
+			nodeStringMap[triple.Subject.String()] = triple.Subject
 		}
+	}
+
+	parent := make(map[*parser.Node]*parser.Node)
+	for keyString := range parentString {
+		node := nodeStringMap[keyString]
+		parent[node] = parentString[keyString]
 	}
 	return parent
 }

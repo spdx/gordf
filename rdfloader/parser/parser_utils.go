@@ -66,7 +66,6 @@ func (parser *Parser) convertRdfIdToRdfAbout(tag xmlreader.Tag) (error) {
 	}
 	// we've found a rdf:ID attribute. converting it into rdf:about attribute.
 	// converting rdf:ID="val" to rdf:about="#val"
-	fmt.Println(tag.Attrs[idx])
 	tag.Attrs[idx].Name = "about"
 	tag.Attrs[idx].Value = "#" + tag.Attrs[idx].Value
 	return nil

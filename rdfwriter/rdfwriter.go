@@ -88,7 +88,7 @@ func getOpeningAndClosingTags(triples []*parser.Triple, rdfNSAbbrev string, invS
 }
 
 // returns the string equivalent of the triples associated with the given node in rdf/xml format.
-func stringify(node *parser.Node, nodeToTriples map[*parser.Node][]*parser.Triple, invSchemaDefinition map[string]string, depth int, tab string) (output string, err error) {
+func stringify(node *parser.Node, nodeToTriples map[string][]*parser.Triple, invSchemaDefinition map[string]string, depth int, tab string) (output string, err error) {
 	// Any rdf/xml tag is formed of OpeningTag, childrenString, ClosingTag
 	var openingTag, childrenString, closingTag string
 
@@ -97,13 +97,13 @@ func stringify(node *parser.Node, nodeToTriples map[*parser.Node][]*parser.Tripl
 	// getting the abbreviation used for rdf namespace.
 	rdfNSAbbrev := getRDFNSAbbreviation(invSchemaDefinition)
 
-	openingTag, closingTag, err = getOpeningAndClosingTags(nodeToTriples[node], rdfNSAbbrev, invSchemaDefinition, tabs, node)
+	openingTag, closingTag, err = getOpeningAndClosingTags(nodeToTriples[node.String()], rdfNSAbbrev, invSchemaDefinition, tabs, node)
 	if err != nil {
 		return
 	}
 
 	// getting rest of the triples after rdf attributes are parsed
-	restTriples := getRestTriples(nodeToTriples[node])
+	restTriples := getRestTriples(nodeToTriples[node.String()])
 
 	depth++     // we'll be parsing one level deep now.
 	tabs += tab // or strings.Repeat(tab, depth)
@@ -121,7 +121,7 @@ func stringify(node *parser.Node, nodeToTriples map[*parser.Node][]*parser.Tripl
 		var childString string
 		// adding opening tag to the child tag:
 		childString += tabs + fmt.Sprintf("<%s>", predicateURI) + "\n"
-		if len(nodeToTriples[triple.Object]) == 0 {
+		if len(nodeToTriples[triple.Object.String()]) == 0 {
 			// the tag ends here and doesn't have any further childs.
 			// object is even one level deep
 			// number of tabs increases.
