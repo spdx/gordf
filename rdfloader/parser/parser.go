@@ -12,8 +12,10 @@ const RDFNS = "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 
 type Parser struct {
 	setTriples       map[string]*Triple
+	setNodes         map[string]*Node
 	Triples          []*Triple
 	writeLock        sync.RWMutex
+	nodesWriteLock   sync.RWMutex
 	SchemaDefinition map[string]uri.URIRef
 	blankNodeGetter  BlankNodeGetter
 	rdfNS            uri.URIRef
@@ -90,8 +92,10 @@ func New() (parser *Parser) {
 	rdfNS, _ := uri.NewURIRef(RDFNS)
 	return &Parser{
 		setTriples:       map[string]*Triple{},
+		setNodes:         map[string]*Node{},
 		Triples:          []*Triple{},
 		writeLock:        sync.RWMutex{},
+		nodesWriteLock:   sync.RWMutex{},
 		SchemaDefinition: map[string]uri.URIRef{"": uri.URIRef{}},
 		blankNodeGetter:  BlankNodeGetter{-1},
 		wg:               sync.WaitGroup{},
@@ -127,6 +131,7 @@ func (parser *Parser) parseBlock(currBlock *xmlreader.Block, node *Node, lastURI
 			used to report errors in a concurrent environment.
 			why pointer? Because go func() cannot return anything.
 	*/
+	node = parser.resolveNode(node)
 	defer parser.wg.Done()
 	lastURI = getLastURI(currBlock.OpeningTag, lastURI)
 	if len(currBlock.Children) == 0 {

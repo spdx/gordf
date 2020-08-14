@@ -29,6 +29,16 @@ func (parser *Parser) appendTriple(triple *Triple) {
 	parser.writeLock.Unlock()
 }
 
+func (parser *Parser) resolveNode(node *Node) (*Node) {
+	existingNode := parser.setNodes[node.String()]
+	if existingNode != nil {
+		return existingNode
+	} else {
+		parser.setNodes[node.String()] = node
+	}
+	return node
+}
+
 func (parser *Parser) uriFromPair(schemaName, name string) (mergedUri uri.URIRef, err error) {
 	// returns the uri representation of a pair of strings.
 	// name:schemaName is an example of pair.
