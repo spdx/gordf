@@ -29,7 +29,9 @@ func (parser *Parser) appendTriple(triple *Triple) {
 	parser.writeLock.Unlock()
 }
 
-func (parser *Parser) resolveNode(node *Node) (*Node) {
+func (parser *Parser) resolveNode(node *Node) *Node {
+	parser.nodesWriteLock.Lock()
+	defer parser.nodesWriteLock.Unlock()
 	existingNode := parser.setNodes[node.String()]
 	if existingNode != nil {
 		return existingNode
@@ -54,6 +56,22 @@ func (parser *Parser) uriFromPair(schemaName, name string) (mergedUri uri.URIRef
 	return baseURI.AddFragment(name), nil
 }
 
+func (parser *Parser) convertRdfIdToRdfAbout(tag xmlreader.Tag) (error) {
+	idx, err := parser.getRDFAttributeIndex(tag, "ID")
+	if err != nil {
+		return err
+	}
+	if idx == -1 {
+		return nil
+	}
+	// we've found a rdf:ID attribute. converting it into rdf:about attribute.
+	// converting rdf:ID="val" to rdf:about="#val"
+	fmt.Println(tag.Attrs[idx])
+	tag.Attrs[idx].Name = "about"
+	tag.Attrs[idx].Value = "#" + tag.Attrs[idx].Value
+	return nil
+}
+
 func (parser *Parser) nodeFromTag(openingTag xmlreader.Tag, lastURI string) (node *Node, err error) {
 	// returns the node object from the opening tag of any block.
 	// https://www.w3.org/TR/rdf-syntax-grammar/figure1.png has sample image having 5 nodes.
@@ -63,6 +81,11 @@ func (parser *Parser) nodeFromTag(openingTag xmlreader.Tag, lastURI string) (nod
 	// if the opening tag has an attribute of rdf:about,
 	//		the node will represented by the value of rdf:about attribute
 	// else, it is a blank node.
+
+	err = parser.convertRdfIdToRdfAbout(openingTag)
+	if err != nil {
+		return nil, err
+	}
 
 	// checking if any of the attributes is a rdf:about attribute
 	index, err := parser.getRDFAttributeIndex(openingTag, "about")
