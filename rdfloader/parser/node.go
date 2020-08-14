@@ -35,7 +35,7 @@ func (getter *BlankNodeGetter) Get() Node {
 
 func (getter *BlankNodeGetter) GetFromId(id string) Node {
 	return Node{
-		NodeType: BLANK,
+		NodeType: NODEIDLITERAL,
 		ID:       fmt.Sprintf("N%v", id),
 	}
 }
