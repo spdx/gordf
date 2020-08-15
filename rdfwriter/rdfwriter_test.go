@@ -160,7 +160,7 @@ func TestWriteToFile(t *testing.T) {
 func Test_stringify(t *testing.T) {
 	bnodes := getNBlankNodes(10)
 	var triples []*parser.Triple
-	_, nodeToTriples := GetAdjacencyList(triples)
+	nodeToTriples := GetNodeToTriples(triples)
 	schemaDefinition := getSampleSchemaDefinition()
 	invSchemaDefinition := invertSchemaDefinition(schemaDefinition)
 	depth := 0
@@ -180,7 +180,7 @@ func Test_stringify(t *testing.T) {
 		Predicate: &parser.Node{NodeType: parser.IRI, ID: parser.RDFNS + "type"},
 		Object:    &parser.Node{NodeType: parser.IRI, ID: "https://inexistent.com/uri#fragment"},
 	})
-	_, nodeToTriples = GetAdjacencyList(triples)
+	nodeToTriples = GetNodeToTriples(triples)
 	_, err = stringify(bnodes[0], nodeToTriples, invSchemaDefinition, depth, tab)
 	if err == nil {
 		t.Errorf("expeected an error saying uri not defined in the schemaDefinition")
@@ -202,7 +202,7 @@ func Test_stringify(t *testing.T) {
 		Predicate: &parser.Node{NodeType: parser.IRI, ID: ""},
 		Object:    &parser.Node{NodeType: parser.LITERAL, ID: "comment"},
 	})
-	_, nodeToTriples = GetAdjacencyList(triples)
+	nodeToTriples = GetNodeToTriples(triples)
 	_, err = stringify(bnodes[0], nodeToTriples, invSchemaDefinition, depth, tab)
 	if err == nil {
 		t.Errorf("expected an error saying invalid predicate uri")
@@ -214,7 +214,7 @@ func Test_stringify(t *testing.T) {
 		NodeType: parser.RESOURCELITERAL,
 		ID:       "http://spdx.org/rdf/terms#checksumAlgorithm_sha256",
 	}
-	_, nodeToTriples = GetAdjacencyList(triples)
+	nodeToTriples = GetNodeToTriples(triples)
 	output, _ = stringify(bnodes[0], nodeToTriples, invSchemaDefinition, depth, tab)
 	expectedOutput = `<spdx:Snippet>
   <spdx:algorithm rdf:resource="http://spdx.org/rdf/terms#checksumAlgorithm_sha256"/>
@@ -235,7 +235,7 @@ func Test_stringify(t *testing.T) {
 			ID:       "comment",
 		},
 	}
-	_, nodeToTriples = GetAdjacencyList(triples)
+	nodeToTriples = GetNodeToTriples(triples)
 	_, err = stringify(bnodes[0], nodeToTriples, invSchemaDefinition, depth, tab)
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -286,7 +286,7 @@ func Test_stringify(t *testing.T) {
 			},
 		},
 	}
-	_, nodeToTriples = GetAdjacencyList(triples)
+	nodeToTriples = GetNodeToTriples(triples)
 	output, _ = stringify(bnodes[0], nodeToTriples, invSchemaDefinition, depth, tab)
 	expectedOutput = `<spdx:externalRef>
   <spdx:ExternalRef>

@@ -68,7 +68,27 @@ func GetNodeToTriples(triples []*parser.Triple) (recoveryDS map[string][]*parser
 			recoveryDS[triple.Object.String()] = []*parser.Triple{}
 		}
 	}
-	return recoveryDS
+	return removeDuplicateTriples(recoveryDS)
+}
+
+func getUniqueTriples(triples []*parser.Triple) []*parser.Triple {
+	set := map[string]*parser.Triple{}
+	for _, triple := range triples {
+		set[triple.Hash()] = triple
+	}
+	var retList []*parser.Triple
+	for key := range set {
+		retList = append(retList, set[key])
+	}
+	return retList
+}
+
+func removeDuplicateTriples(nodeToTriples map[string][]*parser.Triple) map[string][]*parser.Triple {
+	retMap := map[string][]*parser.Triple{}
+	for key := range nodeToTriples {
+		retMap[key] = getUniqueTriples(nodeToTriples[key])
+	}
+	return retMap
 }
 
 // same as dfs function. Just that after each every neighbor of the node is visited, it is appended in a queue.
