@@ -12,8 +12,7 @@ import (
 //   triples: might be unordered
 // Output:
 //    adjList: adjacency list which maps subject to object for each triple
-//    recoveryDS: subject to triple mapping that will help retrieve the triples after sorting the Subject: Object pairs.
-func GetAdjacencyList(triples []*parser.Triple) (adjList map[*parser.Node][]*parser.Node, recoveryDS map[string][]*parser.Triple) {
+func GetAdjacencyList(triples []*parser.Triple) (adjList map[*parser.Node][]*parser.Node) {
 	// triples are analogous to the edges of a graph.
 	// For a (Subject, Predicate, Object) triple,
 	// it forms a directed edge from Subject to Object
@@ -23,25 +22,53 @@ func GetAdjacencyList(triples []*parser.Triple) (adjList map[*parser.Node][]*par
 
 	// initialising the adjacency list:
 	adjList = make(map[*parser.Node][]*parser.Node)
-	recoveryDS = make(map[string][]*parser.Triple)
 	for _, triple := range triples {
 		// create a new entry in the adjList if the key is not already seen.
 		if adjList[triple.Subject] == nil {
 			adjList[triple.Subject] = []*parser.Node{}
-			recoveryDS[triple.Subject.String()] = []*parser.Triple{}
 		}
 
 		// the key is already seen and we can directly append the child
 		adjList[triple.Subject] = append(adjList[triple.Subject], triple.Object)
-		recoveryDS[triple.Subject.String()] = append(recoveryDS[triple.Subject.String()], triple)
 
 		// ensure that there is a key entry for all the children.
 		if adjList[triple.Object] == nil {
 			adjList[triple.Object] = []*parser.Node{}
+		}
+	}
+	return adjList
+}
+
+// Params:
+//   triples: might be unordered
+// Output:
+//    recoveryDS: subject to triple mapping that will help retrieve the
+//                triples after sorting the Subject: Object pairs.
+func GetNodeToTriples(triples []*parser.Triple) (recoveryDS map[string][]*parser.Triple) {
+	// triples are analogous to the edges of a graph.
+	// For a (Subject, Predicate, Object) triple,
+	// it forms a directed edge from Subject to Object
+	// Graphically,
+	//                          predicate
+	//             (Subject) ---------------> (Object)
+
+	// initialising the recoveryDS:
+	recoveryDS = make(map[string][]*parser.Triple)
+	for _, triple := range triples {
+		// create a new entry in the recoverDS if the key is not already seen.
+		if recoveryDS[triple.Subject.String()] == nil {
+			recoveryDS[triple.Subject.String()] = []*parser.Triple{}
+		}
+
+		// the key is already seen and we can directly append the child
+		recoveryDS[triple.Subject.String()] = append(recoveryDS[triple.Subject.String()], triple)
+
+		// ensure that there is a key entry for all the children.
+		if recoveryDS[triple.Object.String()] == nil {
 			recoveryDS[triple.Object.String()] = []*parser.Triple{}
 		}
 	}
-	return adjList, recoveryDS
+	return recoveryDS
 }
 
 // same as dfs function. Just that after each every neighbor of the node is visited, it is appended in a queue.
@@ -122,7 +149,8 @@ func topologicalSort(adjList map[*parser.Node][]*parser.Node) ([]*parser.Node, e
 // Interface for user to provide a list of triples and get the
 // sorted one as the output
 func TopologicalSortTriples(triples []*parser.Triple) (sortedTriples []*parser.Triple, err error) {
-	adjList, recoveryDS := GetAdjacencyList(triples)
+	adjList := GetAdjacencyList(triples)
+	recoveryDS := GetNodeToTriples(triples)
 	sortedNodes, err := topologicalSort(adjList)
 	if err != nil {
 		return sortedTriples, fmt.Errorf("error sorting the triples: %v", err)

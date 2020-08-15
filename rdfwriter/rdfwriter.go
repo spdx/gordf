@@ -157,7 +157,7 @@ func TriplesToString(triples []*parser.Triple, schemaDefinition map[string]uri.U
 	}
 
 	invSchemaDefinition := invertSchemaDefinition(schemaDefinition)
-	_, nodeToTriples := GetAdjacencyList(sortedTriples)
+	nodeToTriples := GetNodeToTriples(sortedTriples)
 	rootTags := GetRootNodes(sortedTriples)
 
 	// now, we can iterate over all the root-nodes and generate the string representation of the nodes.
