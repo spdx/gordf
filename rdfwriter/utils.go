@@ -129,18 +129,12 @@ func TopologicalSortTriples(triples []*parser.Triple) (sortedTriples []*parser.T
 	}
 
 	// initialized a slice
-	sortedTriples = make([]*parser.Triple, len(triples))
+	sortedTriples = []*parser.Triple{}
 
-	i := 0
 	for _, subjectNode := range sortedNodes {
 		// append all the triples associated with the subjectNode
 		for _, triple := range recoveryDS[subjectNode.String()] {
-			if i > len(triples) {
-				// redundant check. there is no way user might reach here.
-				return sortedTriples, fmt.Errorf("overflow error. more triples than expected found after sorting")
-			}
-			sortedTriples[i] = triple
-			i++
+			sortedTriples = append(sortedTriples, triple)
 		}
 	}
 	return sortedTriples, nil
