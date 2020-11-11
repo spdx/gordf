@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/RishabhBhatnagar/gordf/rdfloader/parser"
-	xmlreader "github.com/RishabhBhatnagar/gordf/rdfloader/xmlreader"
+	"github.com/spdx/gordf/rdfloader/parser"
+	xmlreader "github.com/spdx/gordf/rdfloader/xmlreader"
 	"os"
 )
 

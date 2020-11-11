@@ -17,7 +17,7 @@ import (
 	"reflect"
 	"strings"
 
-	reader "github.com/RishabhBhatnagar/gordf/rdfloader/xmlreader"
+	reader "github.com/spdx/gordf/rdfloader/xmlreader"
 )
 
 func printBlockHeader(block reader.Block) {

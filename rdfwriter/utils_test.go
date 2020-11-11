@@ -1,8 +1,8 @@
 package rdfwriter
 
 import (
-	"github.com/RishabhBhatnagar/gordf/rdfloader/parser"
-	"github.com/RishabhBhatnagar/gordf/uri"
+	"github.com/spdx/gordf/rdfloader/parser"
+	"github.com/spdx/gordf/uri"
 	"reflect"
 	"testing"
 )

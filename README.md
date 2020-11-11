@@ -5,7 +5,7 @@
 gordf is a package which provides a parser for RDF files linearized using RDF/XML format. It will be used to represent the rdf files in memory and write back in possibly different formats like json, xml, json.
 
 # License
-[MIT](https://github.com/RishabhBhatnagar/goRdf/blob/master/LICENSE.txt)
+[MIT](https://github.com/spdx/goRdf/blob/master/LICENSE.txt)
 
 # Requirements
 At present, gordf does not require any addittional packages except the base library packages of golang.
@@ -14,18 +14,18 @@ At present, gordf does not require any addittional packages except the base libr
   Make sure that the `GOPATH` and `GOROOT` variables is correctly set in the current environment.
   Recommended go-version is go1.4
  * Using GoLang's Package Manager 
-      <pre>go get github.com/RishabhBhatnagar/gordf</pre>
+      <pre>go get github.com/spdx/gordf</pre>
 
  * Directly From GitHub
-      <pre> git clone https://www.github.com/RishabhBhatnagar/gordf gordf </pre>
+      <pre> git clone https://www.github.com/spdx/gordf gordf </pre>
  
  * Getting a Specific Version
-      <pre> go get -u https://www.github.com/RishabhBhatnagar/gordf@vx.y.z </pre>
+      <pre> go get -u https://www.github.com/spdx/gordf@vx.y.z </pre>
       `vx.y.z` is a valid version from the tags of this repository.
       
  * Updating the Local Installation
-      <pre> go get -u https://www.github.com/RishabhBhatnagar/gordf </pre>
+      <pre> go get -u https://www.github.com/spdx/gordf </pre>
 
 
 # Development Status 
-The repository is in its preliminary stage of development. It might have some defects. For reporting any issue, you can raise a ticket [here](https://github.com/RishabhBhatnagar/goRdf/issues).
+The repository is in its preliminary stage of development. It might have some defects. For reporting any issue, you can raise a ticket [here](https://github.com/spdx/goRdf/issues).

@@ -2,8 +2,8 @@ package parser
 
 import (
 	"fmt"
-	xmlreader "github.com/RishabhBhatnagar/gordf/rdfloader/xmlreader"
-	"github.com/RishabhBhatnagar/gordf/uri"
+	xmlreader "github.com/spdx/gordf/rdfloader/xmlreader"
+	"github.com/spdx/gordf/uri"
 	"strings"
 )
 

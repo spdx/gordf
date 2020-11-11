@@ -14,7 +14,7 @@ USAGE:
 */
 
 import (
-	"github.com/RishabhBhatnagar/gordf/uri"
+	"github.com/spdx/gordf/uri"
 )
 
 type Namespace struct {

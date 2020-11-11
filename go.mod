@@ -1,3 +1,3 @@
-module github.com/RishabhBhatnagar/gordf
+module github.com/spdx/gordf
 
 go 1.14

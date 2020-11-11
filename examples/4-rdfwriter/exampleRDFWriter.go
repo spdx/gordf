@@ -4,9 +4,9 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/RishabhBhatnagar/gordf/rdfloader/parser"
-	xmlreader "github.com/RishabhBhatnagar/gordf/rdfloader/xmlreader"
-	"github.com/RishabhBhatnagar/gordf/rdfwriter"
+	"github.com/spdx/gordf/rdfloader/parser"
+	xmlreader "github.com/spdx/gordf/rdfloader/xmlreader"
+	"github.com/spdx/gordf/rdfwriter"
 	"io"
 	"strings"
 )

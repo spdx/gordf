@@ -3,7 +3,7 @@ package parser
 import (
 	"bufio"
 	"bytes"
-	xmlreader "github.com/RishabhBhatnagar/gordf/rdfloader/xmlreader"
+	xmlreader "github.com/spdx/gordf/rdfloader/xmlreader"
 	"io"
 	"testing"
 )
