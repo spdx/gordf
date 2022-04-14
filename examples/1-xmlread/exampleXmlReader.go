@@ -40,7 +40,7 @@ func main() {
 	// while running the file
 
 	// Sample run:
-	// go run exampleXmlReader.go input.rdf
+	// go run exampleXmlReader.go ../sample-docs/rdf/input.rdf
 
 	// check if we've received the right number of arguments
 	if len(os.Args) != 2 {
