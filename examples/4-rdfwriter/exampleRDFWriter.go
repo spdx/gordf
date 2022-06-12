@@ -30,11 +30,12 @@ func main() {
 	// in the real world, this will be replaced with
 	// xmlreader.XMLReaderFromFileObject call for getting a new file xmlreader
 	xmlReader := xmlreaderFromString(testString)
-	xmlReader, err := xmlreader.XMLReaderFromFilePath("RDF_Files/1.xml")
-	if err != nil {
-		fmt.Printf("Error read XML file from file path: %v\n", err)
-		os.Exit(1)
-	}
+	//Reads XML from file
+	//xmlReader, err := xmlreader.XMLReaderFromFilePath("RDF_Files/1.xml")
+	//if err != nil {
+	//	fmt.Printf("Error read XML file from file path: %v\n", err)
+	//	os.Exit(1)
+	//}
 
 	// parsing the underlying xml structure of rdf file.
 	rootBlock, err := xmlReader.Read()
