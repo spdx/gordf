@@ -6,7 +6,7 @@ import (
 	"unicode"
 )
 
-const WHITESPACE = 1<<'\t' | 1<<'\n' | 1<<'\r' | 1<<' '
+const WHITESPACE uint64 = 1<<'\t' | 1<<'\n' | 1<<'\r' | 1<<' '
 
 type XMLReader struct {
 	fileReader *bufio.Reader
