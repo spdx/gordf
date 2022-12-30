@@ -2,7 +2,7 @@
 [![Build Status](https://github.com/RishabhBhatnagar/goRdf/workflows/go%20test/badge.svg)](https://github.com/spdx/tools-golang/actions)  [![Coverage Status](https://coveralls.io/repos/github/RishabhBhatnagar/gordf/badge.svg?branch=master)](https://coveralls.io/github/RishabhBhatnagar/gordf?branch=master)
 
 
-gordf is a package which provides a parser for RDF files linearized using RDF/XML format. It will be used to represent the rdf files in memory and write back in possibly different formats like json, xml, json.
+gordf is a package which provides a parser for RDF files linearized using RDF/XML format. It will be used to represent the rdf files in memory and write back in possibly different formats like json, and xml.
 
 # License
 [MIT](https://github.com/spdx/goRdf/blob/master/LICENSE.txt)
