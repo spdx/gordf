@@ -23,7 +23,7 @@ func main() {
 
 	rdfParser, err := rdfloader.LoadFromFilePath(filePath)
 	if err != nil {
-		fmt.Printf("Error load rdf file: %v\n", err)
+		fmt.Printf("error load rdf file: %v\n", err)
 		os.Exit(1)
 	}
 

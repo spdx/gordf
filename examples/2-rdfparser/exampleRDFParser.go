@@ -24,19 +24,19 @@ func main() {
 	xmlReader, err := xmlreader.XMLReaderFromFilePath(filePath)
 	if err != nil {
 		// error reading the rdf file.
-		fmt.Printf("Error reading the rdf file %v: %v", filePath, err)
+		fmt.Printf("error reading the rdf file %v: %v", filePath, err)
 		os.Exit(1)
 	}
 	rootBlock, err := xmlReader.Read()
 	if err != nil {
 		// error parsing the xml content
-		fmt.Printf("Error parsing the xml content of the rdf file")
+		fmt.Printf("error parsing the xml content of the rdf file")
 		os.Exit(1)
 	}
 	rdfParser := parser.New()
 	err = rdfParser.Parse(rootBlock)
 	if err != nil {
-		fmt.Printf("Error parsing file: %v\n", err)
+		fmt.Printf("error parsing file: %v\n", err)
 		os.Exit(1)
 	}
 

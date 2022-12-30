@@ -48,7 +48,7 @@ func main() {
 	tab := "    "
 	opString, err := rdfwriter.TriplesToString(rdfParser.Triples, rdfParser.SchemaDefinition, tab)
 	if err != nil {
-		fmt.Printf("Error in a valid example: %v\n", err)
+		fmt.Printf("error in a valid example: %v\n", err)
 		os.Exit(1)
 	}
 	asterisks := strings.Repeat("*", 33)
@@ -61,7 +61,7 @@ func main() {
 	// the output will be written to the buffer.
 	err = rdfwriter.WriteToFile(&b, rdfParser.Triples, rdfParser.SchemaDefinition, tab)
 	if err != nil {
-		fmt.Printf("Write to file error: %v\n", err)
+		fmt.Printf("write to file error: %v\n", err)
 		os.Exit(1)
 	}
 }
