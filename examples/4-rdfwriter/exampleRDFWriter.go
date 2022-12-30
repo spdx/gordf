@@ -8,6 +8,7 @@ import (
 	xmlreader "github.com/spdx/gordf/rdfloader/xmlreader"
 	"github.com/spdx/gordf/rdfwriter"
 	"io"
+	"os"
 	"strings"
 )
 
@@ -27,14 +28,18 @@ func main() {
 	`
 
 	// in the real world, this will be replaced with
-	// xmlreader.XMLReaderFromFileObject call for getting a new file xmlreader
 	xmlReader := xmlreaderFromString(testString)
-	xmlReader, _ = xmlreader.XMLReaderFromFilePath("RDF Files/1.xml")
+
 	// parsing the underlying xml structure of rdf file.
-	rootBlock, _ := xmlReader.Read()
+	rootBlock, err := xmlReader.Read()
+	if err != nil {
+		fmt.Printf("XML reading error: %v\n", err)
+		os.Exit(1)
+	}
 
 	// creating a new parser object
 	rdfParser := parser.New()
+
 	// sets rdf triples from the xml elements from the xmlreader
 	rdfParser.Parse(rootBlock)
 
@@ -43,7 +48,8 @@ func main() {
 	tab := "    "
 	opString, err := rdfwriter.TriplesToString(rdfParser.Triples, rdfParser.SchemaDefinition, tab)
 	if err != nil {
-		panic("error in a valid example")
+		fmt.Printf("error in a valid example: %v\n", err)
+		os.Exit(1)
 	}
 	asterisks := strings.Repeat("*", 33)
 	fmt.Println(asterisks, "OUTPUT String", asterisks)
@@ -53,5 +59,9 @@ func main() {
 	var b bytes.Buffer
 
 	// the output will be written to the buffer.
-	rdfwriter.WriteToFile(&b, rdfParser.Triples, rdfParser.SchemaDefinition, tab)
+	err = rdfwriter.WriteToFile(&b, rdfParser.Triples, rdfParser.SchemaDefinition, tab)
+	if err != nil {
+		fmt.Printf("write to file error: %v\n", err)
+		os.Exit(1)
+	}
 }

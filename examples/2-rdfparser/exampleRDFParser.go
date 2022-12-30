@@ -10,7 +10,7 @@ import (
 func main() {
 	// expects user to enter the file name.
 	// sample run :
-	// 		go run exampleRDFParser.go input.rdf
+	// 		go run exampleRDFParser.go ../sample-docs/rdf/input.rdf
 
 	// checking if input arguments are ok.
 	if len(os.Args) != 2 {
@@ -24,18 +24,20 @@ func main() {
 	xmlReader, err := xmlreader.XMLReaderFromFilePath(filePath)
 	if err != nil {
 		// error reading the rdf file.
-		fmt.Println(err.Error())
+		fmt.Printf("error reading the rdf file %v: %v", filePath, err)
 		os.Exit(1)
 	}
 	rootBlock, err := xmlReader.Read()
 	if err != nil {
 		// error parsing the xml content
-		fmt.Println("error parsing the xml content of the rdf file")
+		fmt.Printf("error parsing the xml content of the rdf file")
+		os.Exit(1)
 	}
 	rdfParser := parser.New()
 	err = rdfParser.Parse(rootBlock)
 	if err != nil {
 		fmt.Printf("error parsing file: %v\n", err)
+		os.Exit(1)
 	}
 
 	// the max number of triples to display

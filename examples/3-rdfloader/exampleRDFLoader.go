@@ -9,7 +9,7 @@ import (
 func main() {
 	// expects user to enter the file name.
 	// sample run :
-	// 		go run exampleRDFLoader.go input.rdf
+	// 		go run exampleRDFLoader.go ../sample-docs/rdf/input.rdf
 
 	// checking if input arguments are ok.
 	if len(os.Args) != 2 {
@@ -23,7 +23,7 @@ func main() {
 
 	rdfParser, err := rdfloader.LoadFromFilePath(filePath)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("error load rdf file: %v\n", err)
 		os.Exit(1)
 	}
 

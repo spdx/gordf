@@ -40,7 +40,7 @@ func main() {
 	// while running the file
 
 	// Sample run:
-	// go run exampleXmlReader.go input.rdf
+	// go run exampleXmlReader.go ../sample-docs/rdf/input.rdf
 
 	// check if we've received the right number of arguments
 	if len(os.Args) != 2 {
@@ -60,13 +60,13 @@ func main() {
 	// Method 1: using file objects
 	fileHandler, err := os.Open(filePath)
 	if err != nil {
-		fmt.Printf("Error opening %v: %v\n", filePath, err)
+		fmt.Printf("error opening %v: %v\n", filePath, err)
 		os.Exit(1)
 	}
 	xmlReader1 := reader.XMLReaderFromFileObject(bufio.NewReader(fileHandler))
 	root1, err := xmlReader1.Read()
 	if err != nil {
-		fmt.Printf("Error while parsing %v: %v\n", filePath, err)
+		fmt.Printf("error while parsing %v: %v\n", filePath, err)
 		os.Exit(1)
 	}
 	fileHandler.Close()
@@ -74,12 +74,12 @@ func main() {
 	// Method 2: using file paths
 	xmlReader2, err := reader.XMLReaderFromFilePath(filePath)
 	if err != nil {
-		fmt.Printf("Error opening %v: %v", filePath, err)
+		fmt.Printf("error opening %v: %v", filePath, err)
 		os.Exit(1)
 	}
 	root2, err := xmlReader2.Read()
 	if err != nil {
-		fmt.Printf("Error while parsing %v: %v\n", filePath, err)
+		fmt.Printf("error while parsing %v: %v\n", filePath, err)
 		os.Exit(1)
 	}
 
