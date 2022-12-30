@@ -17,14 +17,14 @@ At present, gordf does not require any addittional packages except the base libr
       <pre>go get github.com/spdx/gordf</pre>
 
  * Directly From GitHub
-      <pre> git clone https://www.github.com/spdx/gordf gordf </pre>
+      <pre> git clone github.com/spdx/gordf gordf </pre>
  
  * Getting a Specific Version
-      <pre> go get -u https://www.github.com/spdx/gordf@vx.y.z </pre>
+      <pre> go get -u github.com/spdx/gordf@vx.y.z </pre>
       `vx.y.z` is a valid version from the tags of this repository.
       
  * Updating the Local Installation
-      <pre> go get -u https://www.github.com/spdx/gordf </pre>
+      <pre> go get -u github.com/spdx/gordf </pre>
 
 
 # Development Status 
