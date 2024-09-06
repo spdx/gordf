@@ -29,3 +29,4 @@ At present, gordf does not require any addittional packages except the base libr
 
 # Development Status 
 The repository is in its preliminary stage of development. It might have some defects. For reporting any issue, you can raise a ticket [here](https://github.com/spdx/goRdf/issues).
+
