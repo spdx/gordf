@@ -7,6 +7,8 @@ gordf is a package which provides a parser for RDF files linearized using RDF/XM
 # License
 [MIT](https://github.com/spdx/goRdf/blob/master/LICENSE.txt)
 
+Note: the license text in the [sample-docs input file](examples/sample-docs/input.rdf) does not apply to any of the files (including the sample) - it is for illustrative purposes on how license text can be represented in SPDX RDF format.
+
 # Requirements
 At present, gordf does not require any addittional packages except the base library packages of golang.
 
